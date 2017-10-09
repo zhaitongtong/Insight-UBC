@@ -2,6 +2,11 @@
  * Created by rtholmes on 2016-10-31.
  */
 
+import chai = require('chai');
+import chaiHttp = require('chai-http');
+import Response = ChaiHttp.Response;
+import restify = require('restify');
+
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
 import Log from "../src/Util";
@@ -30,6 +35,46 @@ describe("EchoSpec", function () {
 
     afterEach(function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
+    });
+
+    it("Test Server", function() {
+
+        // Init
+        chai.use(chaiHttp);
+        let server = new Server(4321);
+        let URL = "http://127.0.0.1:4321";
+
+        // Test
+        expect(server).to.not.equal(undefined);
+        try{
+            Server.echo((<restify.Request>{}), null, null);
+            expect.fail()
+        } catch(err) {
+            expect(err.message).to.equal("Cannot read property 'json' of null");
+        }
+
+        return server.start().then(function(success: boolean) {
+            return chai.request(URL)
+                .get("/")
+        }).catch(function(err) {
+            expect.fail()
+        }).then(function(res: Response) {
+            expect(res.status).to.be.equal(200);
+            return chai.request(URL)
+                .get("/echo/Hello")
+        }).catch(function(err) {
+            expect.fail()
+        }).then(function(res: Response) {
+            expect(res.status).to.be.equal(200);
+            return server.start()
+        }).then(function(success: boolean) {
+            expect.fail();
+        }).catch(function(err) {
+            expect(err.code).to.equal('EADDRINUSE');
+            return server.stop();
+        }).catch(function(err) {
+            expect.fail();
+        });
     });
 
     it("Should be able to echo", function () {
