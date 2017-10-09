@@ -7,7 +7,6 @@ import Log from "../Util";
 
 // my import
 import DatasetController from '../controller/DatasetController';
-import fs = require('fs');
 
 export default class InsightFacade implements IInsightFacade {
     private static datasetController = new DatasetController();
@@ -26,21 +25,19 @@ export default class InsightFacade implements IInsightFacade {
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
-            try {
-                let dsController = InsightFacade.datasetController;
-                let idExisted: boolean = dsController.inMemory(id);
-                dsController.process(id, content).then(function (result) {
-                    if (!idExisted) {
-                        fulfill({code: 204, body: 'the operation was successful and the id was new'});
-                    } else {
-                        fulfill({code: 201, body: 'the operation was successful and the id already existed'});
-                    }
-                }).catch(function (err) {
-                    reject({code: 400, error: err.message});
-                })
-            } catch (err) {
-                reject({code: 400, error: err.message});
-            }
+            let dsController = InsightFacade.datasetController;
+            let response: InsightResponse;
+            dsController.process(id, content).then(function (result) {
+                if (result) {
+                    response ={code: 204, body: 'the operation was successful and the id was new'};
+                } else {
+                    response ={code: 201, body: 'the operation was successful and the id already existed'};
+                }
+                fulfill(response);
+            }).catch(function (err:Error) {
+                response = {code: 400, body: err.message};
+                reject(response);
+            })
         });
     }
 
@@ -48,11 +45,8 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             try {
                 let dsController = InsightFacade.datasetController;
-                var path = './data/'+ id+".json"
-                var stats: any;
 
                 try {
-                    stats = fs.statSync(path);
                     dsController.delete(id);
                     fulfill({code: 204, body: 'the operation was successful.'});
                 }
