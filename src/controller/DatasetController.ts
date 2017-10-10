@@ -1,6 +1,6 @@
 import Log from "../Util";
-import JSZip = require('jszip');
-import fs = require("fs");
+let fs = require('fs');
+let JSZip = require('jsxip');
 
 /**
  * In memory representation of all datasets.
