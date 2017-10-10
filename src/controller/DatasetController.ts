@@ -93,7 +93,7 @@ export default class DatasetController {
                         })
                     }
 
-                }).catch(function (err) {
+                }).catch(function (err:any) {
                     Log.trace('DatasetController.process method error: can not zip the file.');
                     reject(err);
                 });
