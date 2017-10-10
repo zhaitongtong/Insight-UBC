@@ -16,6 +16,7 @@ describe("InsightFacade", function () {
     var facade: InsightFacade = null;
 
     let fs = require('fs');
+    console.log("Mytest begins")
 
     before(function () {
         Log.info('InsightController::before() - start');
@@ -55,5 +56,21 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(400);
         });
     });
+
+    it("Should able to remove a dataset (204)", function(){
+        return facade.removeDataset('courses').then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    })
+
+    it("Should not able to remove a dataset (404)", function(){
+        return facade.removeDataset('courses').then(function (response: InsightResponse) {
+            expect.fail;
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(404);
+        });
+    })
 
 });

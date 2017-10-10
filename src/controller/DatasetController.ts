@@ -1,5 +1,6 @@
 import Log from "../Util";
 import JSZip = require('jszip');
+import fs = require("fs");
 
 /**
  * In memory representation of all datasets.
@@ -17,7 +18,6 @@ export default class DatasetController {
 
     public getDatasets(): Datasets {
         // if datasets is empty, load all dataset files in ./data from disk
-        let fs = require('fs');
         try {
             if (fs.statSync('./data').isDirectory()) {
                 var data: any = fs.readFileSync('./data/courses.json', 'utf8');
@@ -44,7 +44,7 @@ export default class DatasetController {
 
         let processedDataset : any = [];
         var dictionary: { [course: string]:{} } = {};
-        let coursePromises: any=[];
+        let coursePromises =[];
 
         return new Promise(function (fulfill, reject) {
             try {
@@ -86,7 +86,7 @@ export default class DatasetController {
                     }
 
                     if (id === "courses") {
-                        Promise.all(coursePromises).then(function () {
+                    Promise.all(coursePromises).then(function () {
                             fulfill(true);  // all promises are resolved
                             processedDataset = dictionary;
                             that.save(id, processedDataset);

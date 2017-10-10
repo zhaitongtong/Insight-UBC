@@ -27,14 +27,16 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let dsController = InsightFacade.datasetController;
             let response: InsightResponse;
-            dsController.process(id, content).then(function (result) {
+            dsController.process(id, content)
+                .then(function (result) {
                 if (result) {
                     response ={code: 204, body: 'the operation was successful and the id was new'};
                 } else {
                     response ={code: 201, body: 'the operation was successful and the id already existed'};
                 }
                 fulfill(response);
-            }).catch(function (err:Error) {
+            })
+                .catch(function (err:Error) {
                 response = {code: 400, body: err.message};
                 reject(response);
             })
