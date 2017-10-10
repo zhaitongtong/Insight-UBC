@@ -44,7 +44,7 @@ export default class DatasetController {
 
         let processedDataset : any = [];
         var dictionary: { [course: string]:{} } = {};
-        let coursePromises =[];
+        let coursePromises:any = [];
 
         return new Promise(function (fulfill, reject) {
             try {
