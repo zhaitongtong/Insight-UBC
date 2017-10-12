@@ -45,9 +45,10 @@ export default class InsightFacade implements IInsightFacade {
 
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
-            try {
+            //removeDataset should not reponse with code: 400
+            //Delete it to avoid potential risk
+            //try {
                 let dsController = InsightFacade.datasetController;
-
                 try {
                     dsController.delete(id);
                     fulfill({code: 204, body: 'the operation was successful.'});
@@ -55,10 +56,9 @@ export default class InsightFacade implements IInsightFacade {
                 catch (e) {
                     reject({code: 404, body:'the operation was unsuccessful because the delete was  for a resource that was not previously added.'});
                 }
-            }
-            catch (err) {
-                reject({code: 400, error: err.message});
-            }
+            //} catch (err) {
+            //    reject({code: 400, error: err.message});
+            //}
         });
     }
 

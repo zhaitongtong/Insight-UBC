@@ -2,6 +2,7 @@ import Log from "../src/Util";
 import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
+import {QueryResponse} from "../scr/countroller/QueryController";
 
 describe("InsightFacade", function () {
     this.timeout(30000);
@@ -33,6 +34,8 @@ describe("InsightFacade", function () {
         facade = new InsightFacade();
     });
 
+    //Test for addDataset
+
     it("Should be able to add a new courses dataset (204)", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
@@ -57,6 +60,8 @@ describe("InsightFacade", function () {
         });
     });
 
+    //Test for removeDataset
+
     it("Should able to remove a dataset (204)", function(){
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
@@ -72,5 +77,36 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(404);
         });
     })
+
+    //Test for perform Q
+
+    it("Courses: Should be able to reload a new dataset (204)", function () {
+        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Sample query 1: Simple query", function () {
+
+        let query: QueryRequest = {
+            GET: ["courses_dept", "courses_id", "courses_avg"],
+            WHERE: {
+                "AND": [
+                    {"IS": {"courses_dept": "cpsc"}},
+                    {"IS": {"courses_id": "310"}}
+                    ]},
+            AS: "TABLE"
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+
+    });
+
+
 
 });
