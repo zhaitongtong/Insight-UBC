@@ -38,8 +38,16 @@ export default class InsightFacade implements IInsightFacade {
                     //} else {
                     //response = {code: result, body: 'the operation was successful and the id already existed'};
                     //}
-                    response = {code: result,body:{}}
-                    fulfill(response);
+
+                    // I did not write the body information here.
+                    if (result){
+                        response = {code: result,body:{}}
+                        fulfill(response);}
+                    else {
+                        response = {code: 204, body:{}}
+                        fulfill(response)
+                    }
+
                     //}
 
             })

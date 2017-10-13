@@ -5,11 +5,13 @@ let JSZip = require('jszip');
 /**
  * In memory representation of all datasets.
  */
+
 export interface Datasets {
     [id: string]: {};   // an index signature
 }
 
 export default class DatasetController {
+
     private datasets: Datasets = {};
 
     constructor() {
@@ -61,12 +63,9 @@ export default class DatasetController {
 
                     var alreadyExisted: boolean = false;
 
-
-
                     //if the datasets already has this id, it already exists
 
                     if(that.datasets && that.datasets.hasOwnProperty(id)) {
-
                         alreadyExisted = true;}
 
                     if (id === "courses") {
@@ -102,15 +101,10 @@ export default class DatasetController {
                             }
                         });
                     }
-                    let fullresult = 0
-                        if (alreadyExisted)
-                            fullresult = 201
-                        else
-                            fullresult = 204
 
                     if (id === "courses") {
                     Promise.all(coursePromises).then(function () {
-                            fulfill(fullresult);  // all promises are resolved
+                            fulfill(alreadyExisted?201:204);  // all promises are resolved
                             processedDataset = dictionary;
                             that.save(id, processedDataset);
                         })

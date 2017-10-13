@@ -2,7 +2,8 @@ import Log from "../src/Util";
 import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-//import {QueryResponse} from "../scr/countroller/QueryController";
+import {QueryResponce} from "../src/controller/QueryController";
+import {QueryRequest} from "../src/controller/QueryController";
 
 describe("InsightFacade", function () {
     this.timeout(30000);
@@ -87,10 +88,10 @@ describe("InsightFacade", function () {
             expect.fail('Should not happen');
         });
     });
-/*
+
     it("Sample query 1: Simple query", function () {
 
-        let query: QueryRequest = {
+        let myQ: QueryRequest = {
             GET: ["courses_dept", "courses_id", "courses_avg"],
             WHERE: {
                 "AND": [
@@ -99,7 +100,7 @@ describe("InsightFacade", function () {
                     ]},
             AS: "TABLE"
         };
-        return facade.performQuery(query).then(function (response: InsightResponse) {
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
@@ -107,6 +108,6 @@ describe("InsightFacade", function () {
 
     });
 
-*/
+
 
 });

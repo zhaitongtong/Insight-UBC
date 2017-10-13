@@ -6,10 +6,10 @@ import {Datasets} from "./DatasetController"
 export interface QueryRequest{
     GET?:string|string[]
     WHERE?:{}
-    GORUP?:string[]
+    GROUP?:string[]
     APPLY?:Object[]
-    ORDER:string|Object[]
-    AS:string
+    ORDER?:string|Object[]
+    AS?:string
 }
 
 export interface QueryResponce{
@@ -23,9 +23,13 @@ export default class QueryController{
         this.datasets = datasets;
     }
 
-    public isValid(myQuery:QueryRequest):boolean{
-        if(!myQuery.hasOwnProperty("GET")||!myQuery.hasOwnProperty("WHERE")||(!myQuery.hasOwnProperty("AS"))){
-            return false;
+    public isValid(query:QueryRequest):number{
+        let getList = []
+        for (let i of query.GET){
+                getList.push(query.GET)
+        }
+        if(getList.length==0||!query.hasOwnProperty("GET")||!query.hasOwnProperty("WHERE")||!query.hasOwnProperty("AS")||query.AS.length==0||!query.hasOwnProperty(("AS"))){
+            return 400;
         }
     }
 }
