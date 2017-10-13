@@ -24,7 +24,7 @@ export default class QueryController{
     }
 
     public isValid(myQuery:QueryRequest):boolean{
-        if(!myQuery.hasOwnProperty("GET")||!myQuery.hasOwnProperty("AS")||(!myQuery.hasOwnProperty("WHERE"))){
+        if(!myQuery.hasOwnProperty("GET")||!myQuery.hasOwnProperty("WHERE")||(!myQuery.hasOwnProperty("AS"))){
             return false;
         }
     }

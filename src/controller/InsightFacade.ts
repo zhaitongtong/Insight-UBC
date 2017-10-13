@@ -25,16 +25,23 @@ export default class InsightFacade implements IInsightFacade {
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
+
             let dsController = InsightFacade.datasetController;
             let response: InsightResponse;
             dsController.process(id, content)
                 .then(function (result) {
-                if (result) {
-                    response ={code: 204, body: 'the operation was successful and the id was new'};
-                } else {
-                    response ={code: 201, body: 'the operation was successful and the id already existed'};
-                }
-                fulfill(response);
+                    //if the datasets already has this id, it already exists
+                    //if (1) {
+                    //if (typeof dsController.getDataset(id) == null || typeof dsController.getDataset(id) == {}) {
+                    //    if (!alreadyExisted){
+                    //response = {code: result, body: 'the operation was successful and the id was new'};
+                    //} else {
+                    //response = {code: result, body: 'the operation was successful and the id already existed'};
+                    //}
+                    response = {code: result,body:{}}
+                    fulfill(response);
+                    //}
+
             })
                 .catch(function (err:Error) {
                 response = {code: 400, body: err.message};

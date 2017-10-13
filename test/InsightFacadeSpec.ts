@@ -87,7 +87,7 @@ describe("InsightFacade", function () {
             expect.fail('Should not happen');
         });
     });
-
+/*
     it("Sample query 1: Simple query", function () {
 
         let query: QueryRequest = {
@@ -107,6 +107,6 @@ describe("InsightFacade", function () {
 
     });
 
-
+*/
 
 });

@@ -16,6 +16,14 @@ export default class DatasetController {
         Log.trace('DatasetController::init()');
     }
 
+    public getDataset(id:string):any{
+        let exist : boolean = fs.existsSync('./data/' + id + '.json')
+        if (!exist){
+            return null
+        }
+        return id
+    }
+
     public getDatasets(): Datasets {
         // if datasets is empty, load all dataset files in ./data from disk
         try {
@@ -37,7 +45,7 @@ export default class DatasetController {
      *
      * The promise<boolean> should fulfill if this is done successfully; reject if the dataset was invalid
      */
-    public process(id: string, data: any): Promise<boolean> {
+    public process(id: string, data: any): Promise<number> {
         Log.trace('DatasetController::process( ' + id + '... )');
 
         let that = this;
@@ -50,6 +58,16 @@ export default class DatasetController {
             try {
                 let loadedZip = new JSZip();
                 loadedZip.loadAsync(data, {base64: true}).then(function (zip: JSZip) {
+
+                    var alreadyExisted: boolean = false;
+
+
+
+                    //if the datasets already has this id, it already exists
+
+                    if(that.datasets && that.datasets.hasOwnProperty(id)) {
+
+                        alreadyExisted = true;}
 
                     if (id === "courses") {
                         zip.forEach(function(relativePath: string, file: JSZipObject) { // get each file in the zip
@@ -84,10 +102,15 @@ export default class DatasetController {
                             }
                         });
                     }
+                    let fullresult = 0
+                        if (alreadyExisted)
+                            fullresult = 201
+                        else
+                            fullresult = 204
 
                     if (id === "courses") {
                     Promise.all(coursePromises).then(function () {
-                            fulfill(true);  // all promises are resolved
+                            fulfill(fullresult);  // all promises are resolved
                             processedDataset = dictionary;
                             that.save(id, processedDataset);
                         })
