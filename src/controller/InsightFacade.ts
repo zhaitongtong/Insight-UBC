@@ -8,6 +8,7 @@ import Log from "../Util";
 // my import
 import DatasetController from '../controller/DatasetController';
 
+
 export default class InsightFacade implements IInsightFacade {
     private static datasetController = new DatasetController();
 
@@ -21,48 +22,40 @@ export default class InsightFacade implements IInsightFacade {
      * @param id  The id of the dataset being added.
      * @param content  The base64 content of the dataset. This content should be in the form of a serialized zip file.
      *
-     * The promise should return an InsightResponse for both fulfill and reject.
-     */
+     * */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
-
-            let dsController = InsightFacade.datasetController;
-            let response: InsightResponse;
-            dsController.process(id, content)
-                .then(function (result) {
-                    //if the datasets already has this id, it already exists
-                    //if (1) {
-                    //if (typeof dsController.getDataset(id) == null || typeof dsController.getDataset(id) == {}) {
-                    //    if (!alreadyExisted){
-                    //response = {code: result, body: 'the operation was successful and the id was new'};
-                    //} else {
-                    //response = {code: result, body: 'the operation was successful and the id already existed'};
-                    //}
-
-                    // I did not write the body information here.
-                    if (result){
-                        response = {code: result,body:{}}
-                        fulfill(response);}
-                    else {
-                        response = {code: 204, body:{}}
-                        fulfill(response)
-                    }
-
-                    //}
-
-            })
-                .catch(function (err:Error) {
-                response = {code: 400, body: err.message};
-                reject(response);
-            })
+            try{
+                let dsController = InsightFacade.datasetController;
+                let idExisted: boolean = dsController.inMemory(id);
+                dsController.process(id, content)
+                    .then(function (result) {
+                        if (result && !idExisted){
+                            fulfill({code: 201, body: 'the operation was successful and the id already existed'});}
+                        else {
+                            fulfill({code: 204, body: 'the operation was successful and the id was new'});
+                        }
+                    })
+                    .catch(function (err:Error) {
+                        reject({code: 400, error: err.message});
+                    })
+            }catch (err) {
+                reject({code: 400, error: err.message});
+            }
         });
     }
 
+    /**
+     * Remove a dataset from UBCInsight.
+     *
+     * @param id  The id of the dataset to remove.
+     *
+     * */
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
             //removeDataset should not reponse with code: 400
             //Delete it to avoid potential risk
-            //try {
+            try {
                 let dsController = InsightFacade.datasetController;
                 try {
                     dsController.delete(id);
@@ -71,13 +64,20 @@ export default class InsightFacade implements IInsightFacade {
                 catch (e) {
                     reject({code: 404, body:'the operation was unsuccessful because the delete was  for a resource that was not previously added.'});
                 }
-            //} catch (err) {
-            //    reject({code: 400, error: err.message});
-            //}
+            } catch (err) {
+                reject({code: 400, error: err.message});
+            }
         });
     }
 
+    /**
+     * Perform a query on UBCInsight.
+     *
+     * @param query  The query to be performed. This is the same as the body of the POST message.
+     * @return Promise <InsightResponse>
+     *
+     * */
     performQuery(query: any): Promise <InsightResponse> {
-        return null;
+        return null
     }
 }
