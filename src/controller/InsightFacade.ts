@@ -25,8 +25,6 @@ export default class InsightFacade implements IInsightFacade {
      * */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
-<<<<<<< HEAD
-
             let dsController = InsightFacade.datasetController;
             let response: InsightResponse;
             dsController.process(id, content)
@@ -58,10 +56,7 @@ export default class InsightFacade implements IInsightFacade {
                 response = {code: 400, body: {"error": err.message}};
                 reject(response);
             })
-=======
-
->>>>>>> b8293c65cadcc6b8a0d44fc4bd049624675402fa
-        });
+       });
     }
 
     /**
