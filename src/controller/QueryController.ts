@@ -23,13 +23,13 @@ export default class QueryController{
         this.datasets = datasets;
     }
 
-    public isValid(query:QueryRequest):number{
+    public isValid(query:QueryRequest):boolean{
         let getList = []
         for (let i of query.GET){
                 getList.push(query.GET)
         }
         if(getList.length==0||!query.hasOwnProperty("GET")||!query.hasOwnProperty("WHERE")||!query.hasOwnProperty("AS")||query.AS.length==0||!query.hasOwnProperty(("AS"))){
-            return 400;
+            return false;
 
         }
     }
