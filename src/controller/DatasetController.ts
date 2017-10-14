@@ -102,6 +102,8 @@ export default class DatasetController {
                         });
                     }
 
+
+
                     if (id === "courses") {
                     Promise.all(coursePromises).then(function () {
                             fulfill(alreadyExisted?201:204);  // all promises are resolved

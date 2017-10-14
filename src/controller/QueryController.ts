@@ -30,6 +30,7 @@ export default class QueryController{
         }
         if(getList.length==0||!query.hasOwnProperty("GET")||!query.hasOwnProperty("WHERE")||!query.hasOwnProperty("AS")||query.AS.length==0||!query.hasOwnProperty(("AS"))){
             return 400;
+
         }
     }
 }

@@ -41,18 +41,20 @@ export default class InsightFacade implements IInsightFacade {
 
                     // I did not write the body information here.
                     if (result){
-                        response = {code: result,body:{}}
-                        fulfill(response);}
-                    else {
-                        response = {code: 204, body:{}}
-                        fulfill(response)
+                        if (result==201) {
+                            response = {code: result,body: 'the operation was successful and the id already existed'}
+                        }else if (result == 204){
+                            response = {code:result,body: 'the operation was successful and the id already existed'}
+                        }
+                        fulfill(response);
                     }
-
-                    //}
-
+                    else {
+                        response = {code: 400, body:{"error": "my text"}}
+                        reject(response)
+                    }
             })
                 .catch(function (err:Error) {
-                response = {code: 400, body: err.message};
+                response = {code: 400, body: {"error": err.message}};
                 reject(response);
             })
         });

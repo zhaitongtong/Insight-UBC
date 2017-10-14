@@ -89,7 +89,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    it("Sample query 1: Simple query", function () {
+    it("Simple query", function () {
 
         let myQ: QueryRequest = {
             GET: ["courses_dept", "courses_id", "courses_avg"],
