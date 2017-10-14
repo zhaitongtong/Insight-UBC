@@ -77,7 +77,7 @@ export default class DatasetController {
                                     Log.trace("Course Name: " + coursename);
                                     var processedCourseData: any = [];
                                     if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
-                                        for (var i = 0; i < coursedata.result.length; i++) {  // rename subject, professor and course
+                                        for (var i = 0; i < coursedata.result.length; i++) {
                                             var processed_course_data = {
                                                 dept: coursedata.result[i].Subject,
                                                 id: coursedata.result[i].Course,
