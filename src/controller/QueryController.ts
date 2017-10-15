@@ -1,4 +1,5 @@
 import Log from "../Util";
+
 let fs = require('fs');
 let JSZip = require('jszip');
 import {Datasets} from "./DatasetController"
@@ -21,15 +22,15 @@ import {Datasets} from "./DatasetController"
 }
 */
 
-export interface QueryRequest{
-    WHERE?:{}
-    OPTIONS?:{COLUMNS?:Object[],ORDER?:{}}
+export interface QueryRequest {
+    WHERE?: {}
+    OPTIONS?: { COLUMNS?: Object[], ORDER?: {} }
 }
 
-export interface QueryResponce{
+export interface QueryResponce {
 }
 
-export default class QueryController{
+export default class QueryController {
 
     private datasets: Datasets = {};
 
@@ -38,7 +39,7 @@ export default class QueryController{
     }
 
 
-    public isValid(query: QueryRequest):boolean{
+    public isValid(query: QueryRequest): boolean {
 
         console.log(query.OPTIONS.COLUMNS)
 
@@ -46,24 +47,25 @@ export default class QueryController{
             return false
         }
         //Honeycomb: Empty columns result in invalid query 400.
-        if (query.OPTIONS.COLUMNS == null || typeof query.OPTIONS.COLUMNS == "undefined"){
+        if (query.OPTIONS.COLUMNS == null || typeof query.OPTIONS.COLUMNS == "undefined") {
             return false
         }
 
         //TO-DO Check every elements in COLUMNS
-        for (let course_what of query.OPTIONS.COLUMNS){
-            console.log(typeof course_what.toString())
-            if (course_what.toString() !== "courses_dept"&&
-                course_what.toString() !=="courses_avg"&&
-                course_what.toString() !=="courses_uuid"&&
-                course_what.toString() !=="courses_title"&&
-                course_what.toString() !=="courses_instructor"&&
-                course_what.toString() !=="courses_fail"&&
-                course_what.toString() !=="courses_audit"&&
-                course_what.toString() !=="courses_pass"&&
-                course_what.toString() !=="courses_year"&&
-                course_what.toString() !=="courses_id"&&
-                course_what.toString() !=="courses_size"){
+        for (let course_what of query.OPTIONS.COLUMNS) {
+            console.log(course_what)
+            if (course_what !== ['courses_dept'] &&
+                course_what !== 'courses_avg' &&
+                course_what !== 'courses_uuid' &&
+                course_what !== 'courses_title' &&
+                course_what !== 'courses_instructor' &&
+                course_what !== 'courses_fail' &&
+                course_what !== 'courses_audit' &&
+                course_what !== 'courses_pass' &&
+                course_what !== 'courses_year' &&
+                course_what !== 'courses_id' &&
+                course_what !== 'courses_size') {
+                console.log(course_what.toString() == 'courses_dept')
                 return false
             }
         }
@@ -73,7 +75,7 @@ export default class QueryController{
         return true
     }
 
-    public wherehandle(){
+    public wherehandle() {
 
     }
 }

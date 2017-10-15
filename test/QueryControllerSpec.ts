@@ -1,7 +1,8 @@
 import {default as QueryController, QueryRequest} from "../src/controller/QueryController";
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-var zipFileContents : string = null;
+
+var zipFileContents: string = null;
 var facade: InsightFacade = null;
 import {Datasets} from "../src/controller/DatasetController"
 import chai = require('chai');
@@ -33,17 +34,17 @@ describe("QueryCotroller", function () {
 
     it("Simple query", function () {
         let myQ: QueryRequest = {
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
+            "WHERE": {
+                "GT": {
+                    "courses_avg": 97
                 }
             },
-            "OPTIONS":{
-                "COLUMNS":[
+            "OPTIONS": {
+                "COLUMNS": [
                     "courses_dept",
                     "courses_avg"
                 ],
-                "ORDER":"courses_avg"
+                "ORDER": "courses_avg"
             }
         };
         let dataset: Datasets = {};
@@ -54,14 +55,14 @@ describe("QueryCotroller", function () {
 
     it("Honeycomb: Empty columns result in invalid query 400", function () {
         let myQ: QueryRequest = {
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
+            "WHERE": {
+                "GT": {
+                    "courses_avg": 97
                 }
             },
-            "OPTIONS":{
-                "COLUMNS":[],
-                "ORDER":"courses_avg"
+            "OPTIONS": {
+                "COLUMNS": [],
+                "ORDER": "courses_avg"
             }
         };
         let dataset: Datasets = {};

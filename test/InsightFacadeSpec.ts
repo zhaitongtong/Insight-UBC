@@ -14,7 +14,7 @@ describe("InsightFacade", function () {
     var test2: any;
     var facade: InsightFacade = null;
 
-    var zipFileContents : string = null;
+    var zipFileContents: string = null;
     var facade: InsightFacade = null;
 
     let fs = require('fs');
@@ -63,7 +63,7 @@ describe("InsightFacade", function () {
 
     //Test for removeDataset
 
-    it("Should able to remove a dataset (204)", function(){
+    it("Should able to remove a dataset (204)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
@@ -71,7 +71,7 @@ describe("InsightFacade", function () {
         });
     })
 
-    it("Should not able to remove a dataset (404)", function(){
+    it("Should not able to remove a dataset (404)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect.fail;
         }).catch(function (response: InsightResponse) {
@@ -84,17 +84,17 @@ describe("InsightFacade", function () {
     it("Simple Query 1", function () {
         var that = this;
         let query: QueryRequest = {
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
+            "WHERE": {
+                "GT": {
+                    "courses_avg": 97
                 }
             },
-            "OPTIONS":{
-                "COLUMNS":[
+            "OPTIONS": {
+                "COLUMNS": [
                     "courses_dept",
                     "courses_avg"
                 ],
-                "ORDER":"courses_avg"
+                "ORDER": "courses_avg"
             }
         }
         return facade.performQuery(query).then(function (response: InsightResponse) {

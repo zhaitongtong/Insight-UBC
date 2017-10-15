@@ -1,12 +1,14 @@
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
+import DatasetController from '../controller/DatasetController';
+import Dataset from '../controller/DatasetController';
 
 // my import
 var fs = require('fs');
 var request = require('request');
 import {isUndefined} from "util";
 
-let dictionary: {[index: string]: string} = {};
+let dictionary: { [index: string]: string } = {};
 dictionary = {
     "courses_dept": "Subject",
     "courses_id": "Course",
@@ -21,12 +23,15 @@ dictionary = {
 
 class Dataset_obj {
     id: string;
+
     constructor() {
         this.id = null;
     }
+
     getValue(target: string): any {
         return null;
     }
+
     setValue(target: string, value: string) {
     }
 }
@@ -141,6 +146,8 @@ export interface QueryRequest {
 export default class InsightFacade implements IInsightFacade {
     courses_dataset: string;
 
+    private static datasetController = new DatasetController();
+
     constructor() {
         var path: string = "src/courses.txt";
         if (fs.existsSync(path)) {
@@ -152,128 +159,53 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     addDataset(id: string, content: string): Promise<InsightResponse> {
-
-        return new Promise((fulfill, reject) => {
-            var ret_obj = null;
-            var zip = new JSZip();
-            var exist: boolean = fs.existsSync("src/" + id + ".json");
-
-            zip.loadAsync(content, {"base64": true})
-                .then((data: JSZip) => {
-                    var promise_list: Promise<string>[] = [];
-                    var name_list: string[] = [];
-
-                    if (id == "courses") {
-                        data.forEach(function (path, file) {
-                            name_list.push(file.name);
-                            promise_list.push(file.async("string"));
-                        });
-
-                        var final_string = "{\"" + id + "\":[";
-
-                        Promise.all(promise_list).then((list) => {
-
-                            var i = 0;
-
-                            for (let item of list) {
-
-                                if (i > 0) {
-                                    var temp;
-                                    try {
-                                        temp = JSON.parse(item);
-                                        //console.log(temp["result"]);
-                                        if (temp["result"].length == 0) {
-                                            i++;
-                                            continue;
-                                        }
-                                        var content = '{\"' + name_list[i] + '\":' + item + '},';
-                                        final_string += content;
-                                    }
-                                    catch (Error) {
-                                        //console.log("in catch for each list line 190");
-                                        //return reject({code: 400, body: {"error": Error.message}});
-                                    }
-                                }
-                                i++;
-                            }
-                            final_string = final_string.substr(0, final_string.length - 1) + "]}";
-                            var j_objs: any = null;
-                            try {
-                                j_objs = JSON.parse(final_string);
-                                if (j_objs[id].length == 0) {
-                                    ret_obj = {code: 400, body: {"error": "No valid json object exist"}};
-                                }
-                                j_objs = JSON.stringify(j_objs);
-                            }
-                            catch (err) {
-                                ret_obj = {code: 400, body: {"error": err.message + "     380"}};
-                                return reject(ret_obj)
-                            }
-
-
-                            fs.writeFile('src/' + id + '.txt', j_objs, (err: Error) => {
-                                if (err) {
-                                    ret_obj = {code: 400, body: {"error": err.message + "      388"}};
-                                    return reject(ret_obj);
-                                }
-                                else {
-                                    //console.log("write file error else line 220");
-                                    if (exist) {
-                                        ret_obj = {code: 201, body: j_objs};
-                                    }
-                                    else {
-                                        ret_obj = {code: 204, body: j_objs};
-                                    }
-                                    this.courses_dataset = j_objs;
-                                    return fulfill(ret_obj);
-                                }
-                            });
-
-                        }).catch(function (err: Error) {
-                            //console.log("in write file catch line 228");
-                            ret_obj = {code: 400, body: {"error": err.message + "      406"}};
-                            return reject(ret_obj);
-                        });
-
-                    }
-                }).catch(function (err: Error) {
-                //console.log("in JSZip catch line 235");
-                ret_obj = {code: 400, body: {"error": err.message + "  658"}};
-                return reject(ret_obj);
-            });
-        });
-    }
-
-    removeDataset(id: string): Promise<InsightResponse> {
-        return new Promise((fulfill, reject) => {
-            var ret_obj = null;
-            var path = "src/" + id + ".txt";
-            var exist: boolean = fs.existsSync("src/" + id + ".txt");
-            if (!exist) {
-                ret_obj = {
-                    code: 404,
-                    body: "The operation was unsuccessful because the dataset was already removed before"
-                };
-                return reject(ret_obj);
-            }
-            else {
-                fs.unlink(path, (err: Error) => {
-                    if (err) {
-                        ret_obj = {code: 404, body: {"error": err.message} + " 680"};
-                        return reject(ret_obj);
-                    } else {
-                        ret_obj = {code: 204, body: "The operation was successful"};
-                        if (id == "courses") {
-                            this.courses_dataset = null;
+        return new Promise(function (fulfill, reject) {
+            let dsController = InsightFacade.datasetController;
+            let response: InsightResponse;
+            dsController.process(id, content)
+                .then(function (result) {
+                    if (result) {
+                        if (result == 201) {
+                            response = {code: result, body: 'the operation was successful and the id already existed'}
+                        } else if (result == 204) {
+                            response = {code: result, body: 'the operation was successful and the id already existed'}
                         }
-                        return fulfill(ret_obj);
+                        fulfill(response);
                     }
-                });
+                    else {
+                        response = {code: 400, body: {"error": "my text"}}
+                        reject(response)
+                    }
+                })
+                .catch(function (err: Error) {
+                    response = {code: 400, body: {"error": err.message}};
+                    reject(response);
+                })
+        });
+    }
+    removeDataset(id: string): Promise<InsightResponse> {
+
+        return new Promise(function (fulfill, reject) {
+            try {
+                let dsController = InsightFacade.datasetController;
+                try {
+                    dsController.delete(id);
+                    fulfill({code: 204, body: 'the operation was successful.'});
+                }
+                catch (e) {
+                    reject({
+                        code: 404,
+                        body: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'
+                    });
+                }
+            } catch (err) {
+                reject({code: 400, error: err.message});
             }
         });
     }
 
-    performQuery(query: QueryRequest): Promise <InsightResponse> {
+
+    performQuery(query: QueryRequest): Promise<InsightResponse> {
         return new Promise((fulfill, reject) => {
             if (validate(query).code == 400) {
                 return reject({code: 400, body: {"error": "invalid json or query 698   " + validate(query).body}});
@@ -397,7 +329,7 @@ function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: str
 
     for (let item of ret_table) {
 
-        let ret_obj: {[index: string]: any} = {};
+        let ret_obj: { [index: string]: any } = {};
         for (let column of columns) {
             try {
                 if (!isUndefined(dictionary[column]))
