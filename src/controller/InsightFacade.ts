@@ -514,7 +514,6 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
             throw new Error("empty LT");
         }
         check_missing(inner_keys, missing_col);
-
         if (missing_col.length == 0) {
             var target = dictionary[inner_keys[0]];
             for (let item of table) {
