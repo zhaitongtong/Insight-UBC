@@ -2,8 +2,8 @@ import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
 
 // my import
-import {QueryRequest} from "./QueryController";
 var fs = require('fs');
+var request = require('request');
 import {isUndefined} from "util";
 
 let dictionary: {[index: string]: string} = {};
@@ -133,6 +133,9 @@ class Course_obj extends Dataset_obj {
                 throw new Error(target);
         }
     }
+}
+
+export interface QueryRequest {
 }
 
 export default class InsightFacade implements IInsightFacade {
@@ -655,7 +658,7 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         }
     }
     else
-        throw new Error("invalid query missing filter word 736");
+        throw new Error("invalid query missing filter");
 
     return ret_array;
 }
