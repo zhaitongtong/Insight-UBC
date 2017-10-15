@@ -2,6 +2,7 @@ import Log from "../Util";
 let fs = require('fs');
 let JSZip = require('jszip');
 
+
 /**
  * In memory representation of all datasets.
  */
@@ -101,6 +102,8 @@ export default class DatasetController {
                             }
                         });
                     }
+
+
 
                     if (id === "courses") {
                     Promise.all(coursePromises).then(function () {
