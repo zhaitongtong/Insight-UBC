@@ -1,20 +1,16 @@
 /**
  * Created by rtholmes on 2016-10-31.
  */
-
 import chai = require('chai');
 import chaiHttp = require('chai-http');
 import Response = ChaiHttp.Response;
 import restify = require('restify');
-
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
 import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
 
 describe("EchoSpec", function () {
-
-
     function sanityCheck(response: InsightResponse) {
         expect(response).to.have.property('code');
         expect(response).to.have.property('body');
@@ -37,7 +33,7 @@ describe("EchoSpec", function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
     });
 
-    it("Test Server", function() {
+    it("Test Server", function () {
 
         // Init
         chai.use(chaiHttp);
@@ -46,33 +42,33 @@ describe("EchoSpec", function () {
 
         // Test
         expect(server).to.not.equal(undefined);
-        try{
+        try {
             Server.echo((<restify.Request>{}), null, null);
             expect.fail()
-        } catch(err) {
+        } catch (err) {
             expect(err.message).to.equal("Cannot read property 'json' of null");
         }
 
-        return server.start().then(function(success: boolean) {
+        return server.start().then(function (success: boolean) {
             return chai.request(URL)
                 .get("/")
-        }).catch(function(err) {
+        }).catch(function (err) {
             expect.fail()
-        }).then(function(res: Response) {
+        }).then(function (res: Response) {
             expect(res.status).to.be.equal(200);
             return chai.request(URL)
                 .get("/echo/Hello")
-        }).catch(function(err) {
+        }).catch(function (err) {
             expect.fail()
-        }).then(function(res: Response) {
+        }).then(function (res: Response) {
             expect(res.status).to.be.equal(200);
             return server.start()
-        }).then(function(success: boolean) {
+        }).then(function (success: boolean) {
             expect.fail();
-        }).catch(function(err) {
+        }).catch(function (err) {
             expect(err.code).to.equal('EADDRINUSE');
             return server.stop();
-        }).catch(function(err) {
+        }).catch(function (err) {
             expect.fail();
         });
     });
