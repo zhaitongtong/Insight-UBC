@@ -1,35 +1,36 @@
-import Log from "../src/Util";
 import {expect} from 'chai';
-import InsightFacade from "../src/controller/InsightFacade";
+import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-import {QueryResponce} from "../src/controller/QueryController";
-import {QueryRequest} from "../src/controller/QueryController";
+import InsightFacade from "../src/controller/InsightFacade";
+import {QueryRequest} from "../src/controller/InsightFacade";
+
+var fs = require('fs');
+var JSZip = require('jszip');
 
 describe("InsightFacade", function () {
     this.timeout(30000);
-
     var zipFileContents: string = null;
-    var test0: any;
-    var test1: any;
-    var test2: any;
+    var zipFileContents1: string = null;
+    var sampleQuery1: any;
     var facade: InsightFacade = null;
-
-    var zipFileContents : string = null;
-    var facade: InsightFacade = null;
-
-    let fs = require('fs');
-    console.log("Mytest begins")
-
     before(function () {
         Log.info('InsightController::before() - start');
+        // this zip might be in a different spot for you
         zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
+        sampleQuery1 = JSON.parse(fs.readFileSync('./test/results/q0.json', 'utf8'));
+
         try {
-            fs.unlinkSync('./id.json');
+            // what you delete here is going to depend on your impl, just make sure
+            // all of your temporary files and directories are deleted
+            fs.unlinkSync('./data/courses.json');
+            fs.unlinkSync('./data/rooms.json');
         } catch (err) {
+            // silently fail, but don't crash; this is fine
             Log.warn('InsightController::before() - id.json not removed (probably not present)');
         }
         Log.info('InsightController::before() - done');
     });
+
 
     beforeEach(function () {
         facade = new InsightFacade();
@@ -61,6 +62,28 @@ describe("InsightFacade", function () {
         });
     });
 
+    it("test add courses.zip", function (done) {
+        this.timeout(50000)
+
+        var zip = new JSZip();
+        var temp_1 = "./src/courses.zip";
+        var f = fs.readFileSync(temp_1, {encoding: "base64"});
+
+        var temp = new InsightFacade();
+
+        temp.addDataset("courses", f)
+            .then((response) => {
+                console.log(response.code);
+                //console.log(response.body);
+                done();
+            })
+            .catch((err) => {
+                console.log(err.code);
+                console.log(err.body)
+                done();
+            });
+    });
+
     //Test for removeDataset
 
     it("Should able to remove a dataset (204)", function(){
@@ -80,28 +103,10 @@ describe("InsightFacade", function () {
     })
 
     //Test for perform Q
-
-    it("Simple Query 1", function () {
-        var that = this;
-        let query: QueryRequest = {
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
-                }
-            },
-            "OPTIONS":{
-                "COLUMNS":[
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER":"courses_avg"
-            }
+    function checkResults(first: Array<any>, second: Array<any>): void {
+        if(first.length !== second.length) {
+            expect.fail();
         }
-        return facade.performQuery(query).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
+        expect(first).to.deep.include.members(second);
+    }
 });

@@ -138,11 +138,12 @@ class Course_obj extends Dataset_obj {
 export interface QueryRequest {
 }
 
+
 export default class InsightFacade implements IInsightFacade {
     courses_dataset: string;
 
     constructor() {
-        var path: string = "src/courses.txt";
+        var path: string = "src/courses.zip";
         if (fs.existsSync(path)) {
             this.courses_dataset = fs.readFileSync(path, 'utf-8');
         } else {
@@ -156,7 +157,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise((fulfill, reject) => {
             var ret_obj = null;
             var zip = new JSZip();
-            var exist: boolean = fs.existsSync("src/" + id + ".json");
+            var exist: boolean = fs.existsSync("src/" + id + ".zip");
 
             zip.loadAsync(content, {"base64": true})
                 .then((data: JSZip) => {
@@ -211,9 +212,9 @@ export default class InsightFacade implements IInsightFacade {
                             }
 
 
-                            fs.writeFile('src/' + id + '.txt', j_objs, (err: Error) => {
+                            fs.writeFile('src/' + id + '.zip', j_objs, (err: Error) => {
                                 if (err) {
-                                    ret_obj = {code: 400, body: {"error": err.message + "      388"}};
+                                    ret_obj = {code: 400, body: {"error": err.message}};
                                     return reject(ret_obj);
                                 }
                                 else {
@@ -231,14 +232,14 @@ export default class InsightFacade implements IInsightFacade {
 
                         }).catch(function (err: Error) {
                             //console.log("in write file catch line 228");
-                            ret_obj = {code: 400, body: {"error": err.message + "      406"}};
+                            ret_obj = {code: 400, body: {"error": err.message}};
                             return reject(ret_obj);
                         });
 
                     }
                 }).catch(function (err: Error) {
                 //console.log("in JSZip catch line 235");
-                ret_obj = {code: 400, body: {"error": err.message + "  658"}};
+                ret_obj = {code: 400, body: {"error": err.message}};
                 return reject(ret_obj);
             });
         });
@@ -247,19 +248,16 @@ export default class InsightFacade implements IInsightFacade {
     removeDataset(id: string): Promise<InsightResponse> {
         return new Promise((fulfill, reject) => {
             var ret_obj = null;
-            var path = "src/" + id + ".txt";
-            var exist: boolean = fs.existsSync("src/" + id + ".txt");
+            var path = "src/" + id + ".json";
+            var exist: boolean = fs.existsSync("src/" + id + ".json");
             if (!exist) {
-                ret_obj = {
-                    code: 404,
-                    body: "The operation was unsuccessful because the dataset was already removed before"
-                };
+                ret_obj = {code: 404,body: "The operation was unsuccessful because the dataset was already removed before"};
                 return reject(ret_obj);
             }
             else {
                 fs.unlink(path, (err: Error) => {
                     if (err) {
-                        ret_obj = {code: 404, body: {"error": err.message} + " 680"};
+                        ret_obj = {code: 404, body: {"error": err.message}};
                         return reject(ret_obj);
                     } else {
                         ret_obj = {code: 204, body: "The operation was successful"};
@@ -276,7 +274,7 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise((fulfill, reject) => {
             if (validate(query).code == 400) {
-                return reject({code: 400, body: {"error": "invalid json or query 698   " + validate(query).body}});
+                return reject({code: 400, body: {"error": "invalid json or query " + validate(query).body}});
             }
 
             var j_query = JSON.stringify(query);
@@ -291,7 +289,7 @@ export default class InsightFacade implements IInsightFacade {
                 var id: string = column0.substring(0, column0.indexOf("_"));
                 var exist: boolean = fs.existsSync("src/" + id + ".json");
             } else {
-                return reject({code: 400, body: {"error": " empty column"}});
+                return reject({code: 400, body: {"error": " empty column "}});
             }
 
             if (exist) {
@@ -302,13 +300,15 @@ export default class InsightFacade implements IInsightFacade {
                     table = build_table(data);
                 }
                 var missing_col: string[] = [];
-                var error_400: Object[] = [];
 
                 var body = null;
                 try {
-                    body = filter(table, query, missing_col, error_400);  // **type
+                    var values = filter(table, query, missing_col);
+                    if (values[0].code == 400) {
+                        return reject({code: 400, body: {"error": "invalid filter" + filter(table, query, missing_col).body}});
+                    }
                 } catch (err) {
-                    return reject({code: 400, body: err.message + "   778"});
+                    return reject({code: 400, body: err.message});
                 }
                 if (missing_col.length > 0) {
                     var missing_ids: string[] = [];
@@ -328,11 +328,8 @@ export default class InsightFacade implements IInsightFacade {
                         return reject({code: 424, body: {"missing": missing_ids}});
                     }
                     return reject({code: 400, body: {"missing": missing_col}});
-                } else if (error_400.length > 0) {
-                    return reject({code: 400, body: error_400[0]});
                 }
-                let ret_obj = {result: body};
-                return fulfill({code: 200, body: ret_obj});
+                return fulfill({code: 200, body:"successful"});
             } else {
                 let ret_obj = {code: 424, body: {"missing": [id]}};
                 return reject(ret_obj);
@@ -366,7 +363,7 @@ function build_table(data: string): Array<Course_obj> {
     return course_list;
 }
 
-function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: string [], error_400: Object[]): any {
+function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: string []): any {
 
     var j_query = JSON.stringify(query);
     var j_obj = JSON.parse(j_query);
@@ -379,12 +376,12 @@ function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: str
     var query: QueryRequest = where;
     var ret_table = [];
 
-    if (where_keys.length < 1) {
+    if (where_keys.length === 0) {
         ret_table = table;
-    }
-    else {
+    }else {
         try {
-            ret_table = filter_helper(table, query, missing_col, error_400);
+            var values = filter_helper(table, query, missing_col);
+            ret_table = values[1];
         } catch (err) {
             throw err;
         }
@@ -403,7 +400,7 @@ function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: str
                 if (!isUndefined(dictionary[column]))
                     ret_obj[column] = item.getValue(dictionary[column]);
             } catch (err) {
-                throw err;
+                ret_obj = {code:400, body:"undefined error"};
             }
         }
         ret_array.push(ret_obj);
@@ -411,12 +408,13 @@ function filter(table: Array<Dataset_obj>, query: QueryRequest, missing_col: str
     return ret_array;
 }
 
-function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_col: string[], error_400: Object[]): Array<Dataset_obj> {
+function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_col: string[]):Array<any>{
 
     var j_query = JSON.stringify(query);
     var j_obj = JSON.parse(j_query);
     var keys = Object.keys(j_obj);
     var key = keys[0];
+    var ret_obj: InsightResponse = {code: 200,body:"invalid"};
     var ret_array: Dataset_obj[] = [];
 
     if (key == "IS") {
@@ -424,10 +422,10 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var inner_keys = Object.keys(inner_query);
 
         if (Object.keys(inner_query).length == 0) {
-            throw new Error(" Should have at least 1 parameter when key is IS ");
+            ret_obj = {code:400, body:"Should have at least 1 parameter in IS"};
         }
         if (inner_keys.length > 1) {
-            throw new Error(" Should have at most 1 parameter when key is IS ");
+            ret_obj = {code:400, body:"Should have at most 1 parameter in IS"};
         }
 
         check_missing(inner_keys, missing_col);
@@ -462,12 +460,11 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
                         }
                     }
                     else {
-                        error_400.push({"error": "type error IS"});
+                        ret_obj = {code:400, body:"type error IS"};
                     }
                 } catch (err) {
-                    error_400.push({"error": err.message + " 1004"});
+                    ret_obj = {code:400, body:" error at line 472"};
                 }
-
             }
         }
     }
@@ -476,11 +473,11 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var inner_keys = Object.keys(inner_query);
 
         if (Object.keys(inner_query).length == 0) {
-            throw new Error("empty GT");
+            ret_obj = {code:400, body:"Should have at least 1 parameter in GT"};
         }
 
         if (inner_keys.length > 1) {
-            throw new Error("too many parameters");
+            ret_obj = {code:400, body:"Should have at most 1 parameter in GT"};
         }
 
         check_missing(inner_keys, missing_col);
@@ -496,10 +493,10 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
                         }
                     }
                     else {
-                        error_400.push({"error": "type error GT"});
+                        ret_obj = {code:400, body:"type error GT"};
                     }
                 } catch (err) {
-                    error_400.push({"error": "error at line 996"});
+                    ret_obj = {code:400, body:"error at line 508"};
                 }
             }
         }
@@ -510,11 +507,11 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var inner_keys = Object.keys(inner_query);
 
         if (inner_keys.length > 1) {
-            throw new Error("too many parameters");
+            ret_obj = {code:400, body:"Should have at most 1 parameter in LT"};
         }
 
         if (Object.keys(inner_query).length == 0) {
-            throw new Error("empty LT");
+            ret_obj = {code:400, body:"Should have at most 1 parameter in LT"};
         }
         check_missing(inner_keys, missing_col);
         if (missing_col.length == 0) {
@@ -528,10 +525,10 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
                         }
                     }
                     else {
-                        error_400.push({"error": "type error LT"});
+                        ret_obj = {code:400, body:"type error LT"};
                     }
                 } catch (err) {
-                    error_400.push({"error": err.message + " 1075"});
+                    ret_obj = {code:400, body:"error at line 544"};
                 }
             }
         }
@@ -540,11 +537,11 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var inner_query = j_obj[key];
         var inner_keys = Object.keys(inner_query);
         if (inner_keys.length > 1) {
-            throw new Error("too many parameters");
+            ret_obj = {code:400, body:"Should have at most 1 parameter in EQ"};
         }
 
         if (Object.keys(inner_query).length == 0) {
-            throw new Error("empty EQ");
+            ret_obj = {code:400, body:"Should have at least 1 parameter in LT"};
         }
         check_missing(inner_keys, missing_col);
 
@@ -559,12 +556,11 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
                         }
                     }
                     else {
-                        error_400.push({"error": "type error EQ"});
+                        ret_obj = {code:400, body: "type error EQ"};
                     }
                 } catch (err) {
-                    error_400.push({"error": err.message});
+                    ret_obj = {code:400, body: "error at line 579"};
                 }
-
             }
         }
     }
@@ -573,13 +569,13 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var final_array: Dataset_obj[] = [];
 
         if (and_list.length == 0) {
-            throw new Error("empty AND");
+            ret_obj = {code:400, body: "empty AND"};
         }
 
         for (let item of and_list) {
             var a = JSON.stringify(item);
             var query: QueryRequest = item;
-            var temp = filter_helper(table, query, missing_col, error_400);
+            var temp = filter_helper(table, query, missing_col);
             final_array = final_array.concat(temp);
         }
         final_array.sort(compare);
@@ -608,13 +604,13 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var final_array: Dataset_obj[] = [];
 
         if (or_list.length == 0) {
-            throw new Error("empty OR");
+            ret_obj = {code:400, body: "empty OR"};
         }
 
         for (let item of or_list) {
             var a = JSON.stringify(item);
             var query: QueryRequest = item;
-            var temp = filter_helper(table, query, missing_col, error_400);
+            var temp = filter_helper(table, query, missing_col);
             final_array = final_array.concat(temp);
         }
         final_array.sort(compare);
@@ -631,16 +627,17 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         var inner_query = j_obj[key];
         var inner_keys = Object.keys(inner_query);
         if (inner_keys.length > 1) {
-            throw new Error(" Should have at most 1 parameter when key is NOT ");
+            ret_obj = {code:400, body: " Should have at most 1 parameter when key is NOT "};
         }
         if (Object.keys(inner_query) == []) {
-            throw new Error("empty NOT");
+            ret_obj = {code:400, body: "empty NOT"};
         }
         var query: QueryRequest = inner_query;
-        var before_negate = filter_helper(table, query, missing_col, error_400);
 
-        var final_array = before_negate.concat(table);
-        final_array.sort(compare);
+        var values = filter_helper(table, query, missing_col);
+        var before_negate = values[1];
+        var final_array: Array<Dataset_obj>;
+        final_array = before_negate.concat(table).sort(compare);
 
         var element_1 = final_array[0];
         for (var i = 1; i < final_array.length; i++) {
@@ -656,11 +653,10 @@ function filter_helper(table: Array<Dataset_obj>, query: QueryRequest, missing_c
         if (final_array[final_array.length - 2].id != final_array[final_array.length - 1].id) {
             ret_array.push(final_array[final_array.length - 1]);
         }
+    }else{
+        ret_obj = {code:400, body: "invalid query missing filter"};
     }
-    else
-        throw new Error("invalid query missing filter");
-
-    return ret_array;
+    return [ret_obj,ret_array];
 }
 
 function compare(a: Dataset_obj, b: Dataset_obj): number {

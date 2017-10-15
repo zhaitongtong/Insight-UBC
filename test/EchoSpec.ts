@@ -11,8 +11,6 @@ import Server from "../src/rest/Server";
 import {expect} from 'chai';
 import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-import {QueryResponce} from "../src/controller/QueryController";
-import {QueryRequest} from "../src/controller/QueryController";
 
 describe("EchoSpec", function () {
 
