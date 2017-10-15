@@ -4,9 +4,12 @@
 
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
+import {default as QueryController, QueryRequest} from '../controller/QueryController';
+
 
 // my import
 import DatasetController from '../controller/DatasetController';
+import Dataset from '../controller/DatasetController';
 
 
 export default class InsightFacade implements IInsightFacade {
@@ -91,7 +94,12 @@ export default class InsightFacade implements IInsightFacade {
      * @return Promise <InsightResponse>
      *
      * */
-    performQuery(query: any): Promise <InsightResponse> {
-        return null
+    performQuery(query: QueryRequest): Promise <InsightResponse> {
+        let that = this
+        return new Promise(function (fulfill, reject){
+            if (!query)
+                reject({code:400, error:"my text"})
+            else fulfill ({code:200, body:"my test"})
+        })
     }
 }

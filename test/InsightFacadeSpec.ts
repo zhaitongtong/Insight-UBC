@@ -81,33 +81,27 @@ describe("InsightFacade", function () {
 
     //Test for perform Q
 
-    it("Courses: Should be able to reload a new dataset (204)", function () {
-        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(204);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("Simple query", function () {
-
-        let myQ: QueryRequest = {
-            GET: ["courses_dept", "courses_id", "courses_avg"],
-            WHERE: {
-                "AND": [
-                    {"IS": {"courses_dept": "cpsc"}},
-                    {"IS": {"courses_id": "310"}}
-                    ]},
-            AS: "TABLE"
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+    it("Simple Query 1", function () {
+        var that = this;
+        let query: QueryRequest = {
+            "WHERE":{
+                "GT":{
+                    "courses_avg":97
+                }
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
+            }
+        }
+        return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
 
     });
-
-
-
 });
