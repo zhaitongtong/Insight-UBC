@@ -10,6 +10,8 @@ import {isUndefined} from "util";
 
 // my import
 import DatasetController from '../controller/DatasetController';
+import {isNumber} from "util";
+import {isString} from "util";
 
 let dictionary: { [index: string]: string } = {};
 dictionary = {
@@ -108,18 +110,26 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     performQuery(query: any): Promise <InsightResponse> {
-        return new Promise((fulfill, reject) => {
-            if (validate(query).code == 400) {
-                return reject({code: 400, body: {"error": "invalid json or query 698   " + validate(query).body}});
+        return new Promise(function (fulfill, reject) {
+            if (!validate(query)) {
+                reject({code: 400, body: {"error": "invalid query"}});
+                return;
             }
+
             var j_query = JSON.stringify(query);
             var j_obj = JSON.parse(j_query);
             var where = j_obj["WHERE"];
             var options = j_obj["OPTIONS"];
+            console.log(where)
             var columns = options["COLUMNS"];
             //var order = options["ORDER"];
 
             let data = InsightFacade.datasetController.getDatasets();
+            if (data.length === 0) {
+                reject({code: 424, body: {"error": "missing dataset"}});
+                return;
+            }
+
             let result1: any = [];
             for (let course of data) {
                 if (courseIn(course, where))
@@ -135,49 +145,45 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 result2.push(c);
             }
-            //console.log(result2);
+            //console.log("this is the result" + result2);
             fulfill({code: 200, body: result2});
         });
     }
 }
 
-function validate(query: any): InsightResponse {
-
+function validate(query: any): boolean {
     let ret_obj: InsightResponse = {code: 200, body: "valid"};
     try {
-        var j_query = JSON.stringify(query);
-        var j_obj = JSON.parse(j_query);
-
-        var options = j_obj["OPTIONS"];
+        //var j_query = JSON.stringify(query);
+        //var j_obj = JSON.parse(j_query);
+        var where = query["WHERE"];
+        var options = query["OPTIONS"];
         var columns = options["COLUMNS"];
         if ("ORDER" in options)
             var order = options["ORDER"];
     } catch (err) {
         ret_obj = {code: 400, body: "invalid query"};
-        return ret_obj;
+        return false;
     }
 
-    if (columns.length != 0) {
-        var id: string = columns[0].substring(0, columns[0].indexOf("_"));
-        if (!fs.existsSync("src/" + id + ".json")) {
-            return ret_obj = {code: 424, body: "dataset not exist"};
-        }
-    } else {
-        return ret_obj = {code: 400, body: "empty column"};
-    }
+    if (columns.length == 0)
+        return false;
+
 
     for (let column of columns) {
         var value = dictionary[column];
-        if (column.substring(0, column.indexOf("_")) != id || isUndefined(value)) {
-            return ret_obj = {code: 400, body: "invalid column item"};
+        if (column.substring(0, column.indexOf("_")) != "courses" || isUndefined(value)) {
+            return false;
         }
     }
 
     if (!check_order(order, columns)) {
-        return ret_obj = {code: 400, body: "invalid order"};
+        return false;
     }
 
-    return ret_obj;
+    if (!check_where(where))
+        return false;
+    return true;
 }
 
 function check_order(order: any, columns: any): boolean {
@@ -196,6 +202,35 @@ function check_order(order: any, columns: any): boolean {
         }
     }
     return true;
+}
+
+function check_where(where: any): boolean {
+    if (Object.keys(where).length !== 1)
+        return false;
+    let top = Object.keys(where)[0];
+    if (top === "AND" || top === "OR") {
+        let filters = where[top];
+        for (let i = 0; i < filters.length; i++) {
+            if (!check_where(filters[i]))
+                return false;
+        }
+        return true;
+    }
+    else if (top === "LT" || top === "GT" || top === "EQ") {
+        let m = where[top];
+        let mKey = Object.keys(m)[0];
+        let mValue = m[mKey];
+        return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit');
+    }
+    else if (top === "IS") {
+        let s = where[top];
+        let sKey = Object.keys(s)[0];
+        let sValue = s[sKey];
+        return isString(sValue) && (sKey === 'courses_dept' || sKey === 'courses_id' || sKey === 'courses_instructor' || sKey === 'courses_title' || sKey === 'courses_uuid');
+    }
+    else if (top === "NOT")
+        return check_where(where[top]);
+    return false;
 }
 
 function courseIn(course: any, where: any) : boolean {

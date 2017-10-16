@@ -1,7 +1,6 @@
-/*
-/!**
+/**
  * Created by rtholmes on 2016-10-31.
- *!/
+ */
 
 import chai = require('chai');
 import chaiHttp = require('chai-http');
@@ -112,4 +111,3 @@ describe("EchoSpec", function () {
     });
 
 });
-*/

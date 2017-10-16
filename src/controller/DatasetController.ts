@@ -31,7 +31,7 @@ export default class DatasetController {
     public getDatasets(): any {
         // if datasets is empty, load all dataset files in ./data from disk
         try {
-            if (fs.statSync('./data').isDirectory()) {
+            if (fs.statSync('./data/').isDirectory()) {
                 var data: any = fs.readFileSync('./data/courses.json', 'utf8');
                 this.datasets["courses"] = JSON.parse(data); //testing getting info from ./data
             }
@@ -39,6 +39,7 @@ export default class DatasetController {
             Log.trace(e);
         }
         return mydataset;
+        //return this.datasets
     }
 
     /*
@@ -76,7 +77,7 @@ export default class DatasetController {
                                 var promise = file.async('string').then(function (data) { // for each file in "courses"
                                     var coursedata = JSON.parse(data); // file data type: JSON object
                                     var coursename = file.name.substring(8); //substring 8 to get rid of "courses/"
-                                    Log.trace("Course Name: " + coursename);
+                                    //Log.trace("Course Name: " + coursename);
                                     var processedCourseData: any = [];
                                     if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
                                         for (var i = 0; i < coursedata.result.length; i++) {
@@ -174,6 +175,9 @@ export default class DatasetController {
 
         this.datasets[id]=this.getDatasets();
     }
+    //log.conslo
+    //infinit loop
+    //repsponce body no code.
 
     public delete(id: string) {
         let fs = require('fs');

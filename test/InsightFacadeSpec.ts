@@ -23,11 +23,11 @@ describe("InsightFacade", function () {
     before(function () {
         Log.info('InsightController::before() - start');
         zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
-        try {
+        /*try {
             fs.unlinkSync('./id.json');
         } catch (err) {
             Log.warn('InsightController::before() - id.json not removed (probably not present)');
-        }
+        }*/
         Log.info('InsightController::before() - done');
     });
 
@@ -53,13 +53,14 @@ describe("InsightFacade", function () {
         });
     });
 
-    it("Should not be able to add an invalid dataset (400)", function () {
+    /*it("Should not be able to add an invalid dataset (400)", function () {
         return facade.addDataset('courses', 'some random bytes').then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
         });
     });
+*/
 
     //Test for removeDataset
 
@@ -109,7 +110,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             let result: any = response.body;
             console.log(result.length); // 49
-            console.log(result);
+            //console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -155,11 +156,47 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             let result: any = response.body;
             console.log(result.length); // 56
-            console.log(result);
+            //console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
 
     });
 
+    it("All courses", function () {
+
+        let myQ = {
+            "WHERE":{
+                "OR":[
+                    {
+                        "GT":{
+                            "courses_avg":65
+                        }
+                    },
+                    {
+                        "LT":{
+                            "courses_avg":75
+                        }
+                    }
+                ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 64612?
+            //console.log(result);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+
+    });
 });
