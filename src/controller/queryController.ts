@@ -6,7 +6,9 @@ import {stringify} from "querystring";
 
 export interface QueryRequest{
     WHERE?:{}
-    OPTIONS?:{COLUMNS?:{},ORDER?:string}
+    OPTIONS?:{}
+    COLUMNS?:{}
+    ORDER?:string
 }
 
 export interface QueryResponce{
@@ -26,12 +28,41 @@ export default class QueryController{
 
     //TO-DO check dataset valid
     public isValid(query:QueryRequest):boolean{
-        return true
+        console.log(query["COLUMNS"])
+
+        if (query == null || query["OPTIONS"] == "undefined") {
+            return false
+        }
+
+        // Empty columns result in invalid query 400.
+        if (query["COLUMNS"] === null || typeof query["COLUMNS"] === "undefined") {
+            return false
+        }
+
+        // Check every elements in COLUMNS
+        var columns: any = query["COLUMNS"];
+        for (let course_what of columns){
+            console.log(course_what)
+            if (course_what !== ['courses_dept'] &&
+                course_what !== 'courses_avg' &&
+                course_what !== 'courses_uuid' &&
+                course_what !== 'courses_title' &&
+                course_what !== 'courses_instructor' &&
+                course_what !== 'courses_fail' &&
+                course_what !== 'courses_audit' &&
+                course_what !== 'courses_pass' &&
+                course_what !== 'courses_id' ) {
+                console.log(course_what.toString() == 'courses_dept')
+                return false
+            }
+        }
+        return true;
     }
 
     public query(query:QueryRequest){
         var temp :any = this.datasets;
-        var data = temp;
+        // temp change data
+        var data = fs.readFileSync('/scr/course.json')
         //console.log(data)
         var result :any = new Object();
         if (data === undefined || data === null) {
@@ -146,16 +177,16 @@ export default class QueryController{
     public greaterThan(queryBody: any, courses: Array<Object>): Array<Object> {
         console.log("we get greater than")
 
-        var c = queryBody["GT"]; //  {'courses_avg': 80}
+        var c = queryBody["GT"]; //  {'courses_avg': 97
         console.log(c)
 
         var fakeKey = Object.keys(c); // 'courses_avg'
         console.log(fakeKey)
 
-        var value = c[Object.keys(queryBody["GT"])[0]];// 80
+        var value = c[Object.keys(queryBody["GT"])[0]];// 97
         console.log(value)
 
-        console.log("we come to value 80")
+        console.log("we come to value 97")
 
         /*if (fakeKey.indexOf("[") == -1) {
             var key = stringify(fakeKey);
@@ -169,7 +200,7 @@ export default class QueryController{
 
         if (this.isKeyValid(key)) {
             if (key === "courses_avg") {
-                console.log(courses)
+                console.log(courses[0])
 
                 console.log(typeof courses)
                 var filteredCourse = courses.filter(function (section: any) {

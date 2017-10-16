@@ -133,6 +133,28 @@ describe("InsightFacade", function () {
 
     });
 
+    it("Simple query", function () {
+        let myQ: QueryRequest = {
+                "WHERE":{
+                    "GT":{
+                        "courses_avg":97
+                    }
+                },
+                "OPTIONS":{
+                    "COLUMNS":[
+                        "courses_dept",
+                        "courses_avg"
+                    ],
+                    "ORDER":"courses123"
+                }
+            }
+        ;
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
 
+    });
 
 });
