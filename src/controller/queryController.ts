@@ -1,3 +1,4 @@
+/*
 import Log from "../Util";
 let fs = require('fs');
 let JSZip = require('jszip');
@@ -136,7 +137,7 @@ export default class QueryController{
         return courses;
     }
 
-    public orderCourse(query: any, courses: Array<Object>): Array<Object> {
+    public c(query: any, courses: Array<Object>): Array<Object> {
         var orderKey = query["ORDER"];
         courses = courses.sort(function (a, b) {
             var tempA: any = a;
@@ -154,13 +155,13 @@ export default class QueryController{
     }
 
     public isKeyValid(key: string): boolean {
-        console.log("we come to is key Valid")
+        //console.log("we come to is key Valid")
         if (key === "courses_id" || key === "courses_uuid" ||
             key === "courses_instructor" || key === "courses_dept" ||
             key === "courses_avg" || key === "courses_pass" ||
             key === "courses_fail" || key === "courses_audit" ||
             key === "courses_title") {
-            console.log("we come to iskeyvalid result true")
+            //console.log("we come to iskeyvalid result true")
             return true;
         }
         return false;
@@ -188,12 +189,12 @@ export default class QueryController{
 
         console.log("we come to value 97")
 
-        /*if (fakeKey.indexOf("[") == -1) {
+        /!*if (fakeKey.indexOf("[") == -1) {
             var key = stringify(fakeKey);
         } else {
             var key = stringify(fakeKey)
             var key = key.substring(1, fakeKey.length - 1);
-        }*/
+        }*!/
         var key = fakeKey.toString()
         console.log(key)
 
@@ -447,3 +448,4 @@ export default class QueryController{
 
 
 }
+*/

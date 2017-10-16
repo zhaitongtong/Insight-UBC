@@ -2,8 +2,8 @@ import Log from "../src/Util";
 import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-import {QueryResponce} from "../src/controller/QueryController";
-import {QueryRequest} from "../src/controller/QueryController";
+//import {QueryResponce} from "../src/controller/QueryController";
+//import {QueryRequest} from "../src/controller/QueryController";
 
 describe("InsightFacade", function () {
     this.timeout(30000);
