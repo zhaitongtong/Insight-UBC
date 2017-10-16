@@ -14,13 +14,13 @@ describe("InsightFacade", function () {
     var test2: any;
     var facade: InsightFacade = null;
 
-    var zipFileContents: string = null;
+    var zipFileContents : string = null;
     var facade: InsightFacade = null;
 
     let fs = require('fs');
     console.log("Mytest begins")
 
-    before(function () {
+   /* before(function () {
         Log.info('InsightController::before() - start');
         zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
         try {
@@ -33,11 +33,31 @@ describe("InsightFacade", function () {
 
     beforeEach(function () {
         facade = new InsightFacade();
+    });*/
+    var zipFileContents: string = null;
+    var facade: InsightFacade = null;
+    before(function () {
+        Log.info('InsightController::before() - start');
+
+        zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
+        try {
+            // what you delete here is going to depend on your impl, just make sure
+            // all of your temporary files and directories are deleted
+            fs.unlinkSync('./data/courses.json');
+        } catch (err) {
+            // silently fail, but don't crash; this is fine
+            Log.warn('InsightController::before() - id.json not removed (probably not present)');
+        }
+        Log.info('InsightController::before() - done');
+    });
+
+    beforeEach(function () {
+        facade = new InsightFacade;
     });
 
     //Test for addDataset
 
-    it("Should be able to add a new courses dataset (204)", function () {
+    /*it("Should be able to add a new courses dataset (204)", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
@@ -63,7 +83,7 @@ describe("InsightFacade", function () {
 
     //Test for removeDataset
 
-    it("Should able to remove a dataset (204)", function () {
+    it("Should able to remove a dataset (204)", function(){
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
@@ -71,7 +91,7 @@ describe("InsightFacade", function () {
         });
     })
 
-    it("Should not able to remove a dataset (404)", function () {
+    it("Should not able to remove a dataset (404)", function(){
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect.fail;
         }).catch(function (response: InsightResponse) {
@@ -81,27 +101,38 @@ describe("InsightFacade", function () {
 
     //Test for perform Q
 
-    it("Simple Query 1", function () {
-        var that = this;
-        let query: QueryRequest = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
+    it("Courses: Should be able to reload a new dataset (204)", function () {
+        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+*/
+    it("Simple query", function () {
+        let myQ: QueryRequest = {
+                "WHERE":{
+                    "GT":{
+                        "courses_avg":97
+                    }
+                },
+                "OPTIONS":{
+                    "COLUMNS":[
+                        "courses_dept",
+                        "courses_avg"
+                    ],
+                    "ORDER":"courses_avg"
                 }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": "courses_avg"
             }
-        }
-        return facade.performQuery(query).then(function (response: InsightResponse) {
+        ;
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
 
     });
+
+
+
 });
