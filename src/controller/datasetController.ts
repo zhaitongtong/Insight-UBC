@@ -10,12 +10,11 @@ export interface Datasets {
     [id: string]: {};   // an index signature
 }
 
+var mydataset: any = [];
+
 export default class DatasetController {
 
     private datasets: Datasets = {};
-    public printDataset (){
-        console.log(this.datasets)
-    }
 
     constructor() {
         Log.trace('DatasetController::init()');
@@ -26,29 +25,20 @@ export default class DatasetController {
         if (!exist){
             return null
         }
-        if (this.datasets[id] === undefined || this.datasets[id] === {}) {
-            var data = fs.readFileSync("./data/"+id+".json", "utf8");
-            this.datasets[id] = JSON.parse(data);
-            Log.trace(JSON.stringify(this.datasets[id]));
-        }
-        return this.datasets[id];
+        return id
     }
 
-    public getDatasets(): Datasets {
+    public getDatasets(): any {
         // if datasets is empty, load all dataset files in ./data from disk
-        let that = this
-
-        //if(!that.datasets) {
-        if (1){
-            let links = fs.readdirSync("./data/");
-
-            for (let link of links) {
-                let id = link.split(".")[0];
-                this.datasets[id] = JSON.parse(fs.readFileSync("./data/" + link, 'utf-8'));
+        try {
+            if (fs.statSync('./data').isDirectory()) {
+                var data: any = fs.readFileSync('./data/courses.json', 'utf8');
+                this.datasets["courses"] = JSON.parse(data); //testing getting info from ./data
             }
-            console.log(typeof this.datasets)
+        }catch (e){
+            Log.trace(e);
         }
-        return this.datasets;
+        return mydataset;
     }
 
     /*
@@ -118,9 +108,33 @@ export default class DatasetController {
 
                     if (id === "courses") {
                     Promise.all(coursePromises).then(function () {
-                            fulfill(alreadyExisted?201:204);  // all promises are resolved
+                        fulfill(alreadyExisted?201:204);  // all promises are resolved
+                        if (!alreadyExisted) {
                             processedDataset = dictionary;
+                            let allCourses = Object.keys(processedDataset);
+
+                            for (let i = 0; i < allCourses.length; i++) {
+                                let eachCourse = allCourses[i]; // AANB504
+                                let courses = processedDataset[eachCourse]['result'];
+                                for (let j = 0; j < courses.length; j++) {
+                                    let course = courses[j];
+                                    let c: any= {};
+                                    c["courses_dept"] = course["dept"];
+                                    c["courses_id"] = course["id"];
+                                    c["courses_avg"] = course["avg"];
+                                    c["courses_instructor"] = course["instructor"];
+                                    c["courses_title"] = course["title"];
+                                    c["courses_pass"] = course["pass"];
+                                    c["courses_fail"] = course["fail"];
+                                    c["courses_audit"] = course["audit"];
+                                    c["courses_uuid"] = course["uuid"];
+
+                                    mydataset.push(c);
+                                }
+                            }
+
                             that.save(id, processedDataset);
+                        }
                         })
                     }
 

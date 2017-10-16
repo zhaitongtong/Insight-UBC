@@ -63,7 +63,7 @@ export default class QueryController{
         var temp :any = this.datasets;
         // temp change data
         var data = fs.readFileSync('/scr/course.json')
-        //console.log(data)
+        console.log(data)
         var result :any = new Object();
         if (data === undefined || data === null) {
             throw Error;//424 here

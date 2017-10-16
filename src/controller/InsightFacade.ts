@@ -4,11 +4,40 @@
 
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
-import {QueryRequest, default as QueryController} from "../controller/QueryController";
+var fs = require('fs');
+var request = require('request');
+import {isUndefined} from "util";
+
 // my import
 import DatasetController from '../controller/DatasetController';
-let fs = require("fs");
-let JSZip = require("jszip");
+
+let dictionary: { [index: string]: string } = {};
+dictionary = {
+    "courses_dept": "Subject",
+    "courses_id": "Course",
+    "courses_avg": "Avg",
+    "courses_instructor": "Professor",
+    "courses_title": "Title",
+    "courses_pass": "Pass",
+    "courses_fail": "Fail",
+    "courses_audit": "Audit",
+    "courses_uuid": "id",
+};
+
+class Dataset_obj {
+    id: string;
+
+    constructor() {
+        this.id = null;
+    }
+
+    getValue(target: string): any {
+        return null;
+    }
+
+    setValue(target: string, value: string) {
+    }
+}
 
 export default class InsightFacade implements IInsightFacade {
     private static datasetController = new DatasetController();
@@ -26,40 +55,25 @@ export default class InsightFacade implements IInsightFacade {
      * */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
-
-            let dsController = InsightFacade.datasetController;
-            let response: InsightResponse;
-            dsController.process(id, content)
-                .then(function (result) {
-                    //if the datasets already has this id, it already exists
-                    //if (1) {
-                    //if (typeof dsController.getDataset(id) == null || typeof dsController.getDataset(id) == {}) {
-                    //    if (!alreadyExisted){
-                    //response = {code: result, body: 'the operation was successful and the id was new'};
-                    //} else {
-                    //response = {code: result, body: 'the operation was successful and the id already existed'};
-                    //}
-
-                    // I did not write the body information here.
-                    if (result){
-                        if (result==201) {
-                            response = {code: result,body: 'the operation was successful and the id already existed'}
-                        }else if (result == 204){
-                            response = {code:result,body: 'the operation was successful and the id already existed'}
+            try{
+                let dsController = InsightFacade.datasetController;
+                let idExists: boolean = dsController.inMemory(id);
+                dsController.process(id, content)
+                    .then(function (result) {
+                        if (!idExists){
+                            fulfill({code:204,body: 'the operation was successful and the id already existed'});
+                        }else {
+                            fulfill({code: 201,body: 'the operation was successful and the id already existed'})
                         }
-                        fulfill(response);
-                    }
-                    else {
-                        response = {code: 400, body:{"error": "my text"}}
-                        reject(response)
-                    }
-            })
-                .catch(function (err:Error) {
-                response = {code: 400, body: {"error": err.message}};
-                reject(response);
-            })
-       });
-    }
+                    }).catch(function (err: Error) {
+                    reject({code: 400, body: 'fail to precess the dataset in addDataset'});
+                })
+            } catch (err) {
+                reject({code: 400, body: 'other error in addDataset'});
+            }
+        });
+    };
+
 
     /**
      * Remove a dataset from UBCInsight.
@@ -94,30 +108,145 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     performQuery(query: any): Promise <InsightResponse> {
-        console.log(query)
-        return new Promise(function (fulfill, reject) {
-            try {
-
-                let queryController = new QueryController(InsightFacade.datasetController.getDatasets());
-                //Log.any(query);
-                let isValid = queryController.isValid(query);
-                //console.log(isValid)
-                //let id = queryController.datasetValid(query);
-                let dataset = InsightFacade.datasetController.getDatasets();
-                console.log(dataset)
-                if (isValid) {
-                    if (dataset === undefined || dataset === null) {
-                        return fulfill({code:424, body :'the query failed because of a missing dataset'});
-                    } else {
-                        var result = queryController.query(query);
-                        return fulfill({code:200, body: result}); //JSON.stringify(result) ?
-                    }
-                } else {
-                    reject({code:400, error :'invalid query'});
-                }
-            } catch (err) {
-                reject({code:400, error: 'error'});
+        return new Promise((fulfill, reject) => {
+            if (validate(query).code == 400) {
+                return reject({code: 400, body: {"error": "invalid json or query 698   " + validate(query).body}});
             }
+            var j_query = JSON.stringify(query);
+            var j_obj = JSON.parse(j_query);
+            var where = j_obj["WHERE"];
+            var options = j_obj["OPTIONS"];
+            var columns = options["COLUMNS"];
+            //var order = options["ORDER"];
+
+            let data = InsightFacade.datasetController.getDatasets();
+            let result1: any = [];
+            for (let course of data) {
+                if (courseIn(course, where))
+                    result1.push(course);
+            }
+            let result2: any = [];
+            for (let i = 0; i < result1.length; i++) {
+                let course = result1[i];
+                let c: any = {};
+                for (let j in course) {
+                    if (columns.includes(j))
+                        c[j] = course[j];
+                }
+                result2.push(c);
+            }
+            //console.log(result2);
+            fulfill({code: 200, body: result2});
         });
     }
-};
+}
+
+function validate(query: any): InsightResponse {
+
+    let ret_obj: InsightResponse = {code: 200, body: "valid"};
+    try {
+        var j_query = JSON.stringify(query);
+        var j_obj = JSON.parse(j_query);
+
+        var options = j_obj["OPTIONS"];
+        var columns = options["COLUMNS"];
+        if ("ORDER" in options)
+            var order = options["ORDER"];
+    } catch (err) {
+        ret_obj = {code: 400, body: "invalid query"};
+        return ret_obj;
+    }
+
+    if (columns.length != 0) {
+        var id: string = columns[0].substring(0, columns[0].indexOf("_"));
+        if (!fs.existsSync("src/" + id + ".json")) {
+            return ret_obj = {code: 424, body: "dataset not exist"};
+        }
+    } else {
+        return ret_obj = {code: 400, body: "empty column"};
+    }
+
+    for (let column of columns) {
+        var value = dictionary[column];
+        if (column.substring(0, column.indexOf("_")) != id || isUndefined(value)) {
+            return ret_obj = {code: 400, body: "invalid column item"};
+        }
+    }
+
+    if (!check_order(order, columns)) {
+        return ret_obj = {code: 400, body: "invalid order"};
+    }
+
+    return ret_obj;
+}
+
+function check_order(order: any, columns: any): boolean {
+    if (!isUndefined(order)) {
+        if (typeof order == "string") {
+            let valid = false;
+            for (let column of columns) {
+                if (order == column) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function courseIn(course: any, where: any) : boolean {
+    let top = Object.keys(where)[0];
+    if (top === "AND") {
+        let filters = where[top];
+        for (let i = 0; i < filters.length; i++) {
+            if (!courseIn(course, filters[i]))
+                return false;
+        }
+        return true;
+    } else if (top === "OR") {
+        let filters = where[top];
+        for (let i = 0; i < filters.length; i++) {
+            if (courseIn(course, filters[i]))
+                return true;
+        }
+        return false;
+    } else if (top === "EQ") {
+        return course[Object.keys(where[top])[0]] === where[top][Object.keys(where[top])[0]];
+    } else if (top === "LT") {
+        return course[Object.keys(where[top])[0]] < where[top][Object.keys(where[top])[0]];
+    } else if (top === "GT") {
+        return course[Object.keys(where[top])[0]] > where[top][Object.keys(where[top])[0]];
+    } else if (top === "IS") {
+        let scomparison = where[top];
+        let s_key = Object.keys(scomparison)[0];
+        let s_value: string = scomparison[s_key];
+        let c_value: string = course[s_key];
+        let hasStarEnd = (s_value.charAt(s_value.length-1) === '*');
+        if (hasStarEnd)
+            s_value = s_value.substring(0, s_value.length-1);
+        let hasStarFront = (s_value.charAt(0) === '*');
+        if (hasStarFront)
+            s_value = s_value.substr(1);
+        if (s_value.length == 0)
+            return false;
+        let start = 0;
+        let valid = false;
+        while (!valid && start < c_value.length) {
+            let pos = c_value.indexOf(s_value, start);
+            if (pos < 0)
+                break;
+            start = pos + 1;
+            if ((pos > 0 && !hasStarFront) || ((pos + s_value.length) < c_value.length && !hasStarEnd))
+                continue;
+            valid = true;
+        }
+        return valid;
+    } else if (top === "NOT") {
+        return !courseIn(course, where);
+    }
+    return false;
+}

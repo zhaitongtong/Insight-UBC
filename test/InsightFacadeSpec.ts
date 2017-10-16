@@ -20,7 +20,7 @@ describe("InsightFacade", function () {
     let fs = require('fs');
     console.log("Mytest begins")
 
-   /* before(function () {
+    before(function () {
         Log.info('InsightController::before() - start');
         zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
         try {
@@ -33,31 +33,11 @@ describe("InsightFacade", function () {
 
     beforeEach(function () {
         facade = new InsightFacade();
-    });*/
-    var zipFileContents: string = null;
-    var facade: InsightFacade = null;
-    before(function () {
-        Log.info('InsightController::before() - start');
-
-        zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
-        try {
-            // what you delete here is going to depend on your impl, just make sure
-            // all of your temporary files and directories are deleted
-            fs.unlinkSync('./data/courses.json');
-        } catch (err) {
-            // silently fail, but don't crash; this is fine
-            Log.warn('InsightController::before() - id.json not removed (probably not present)');
-        }
-        Log.info('InsightController::before() - done');
-    });
-
-    beforeEach(function () {
-        facade = new InsightFacade;
     });
 
     //Test for addDataset
 
-    /*it("Should be able to add a new courses dataset (204)", function () {
+    it("Should be able to add a new courses dataset (204)", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
@@ -108,51 +88,76 @@ describe("InsightFacade", function () {
             expect.fail('Should not happen');
         });
     });
-*/
+
     it("Simple query", function () {
-        let myQ: QueryRequest = {
-                "WHERE":{
-                    "GT":{
-                        "courses_avg":97
-                    }
-                },
-                "OPTIONS":{
-                    "COLUMNS":[
-                        "courses_dept",
-                        "courses_avg"
-                    ],
-                    "ORDER":"courses_avg"
+
+        let myQ = {
+            "WHERE":{
+                "GT":{
+                    "courses_avg":97
                 }
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_avg"
+                    ],
+                "ORDER":"courses_avg"
             }
-        ;
+        };
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 49
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
 
     });
 
-    it("Simple query", function () {
-        let myQ: QueryRequest = {
-                "WHERE":{
-                    "GT":{
-                        "courses_avg":97
+    it("Complex query", function () {
+
+        let myQ = {
+            "WHERE":{
+                "OR":[
+                    {
+                        "AND":[
+                            {
+                                "GT":{
+                                    "courses_avg":90
+                                }
+                            },
+                            {
+                                "IS":{
+                                    "courses_dept":"adhe"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "EQ":{
+                            "courses_avg":95
+                        }
                     }
-                },
-                "OPTIONS":{
-                    "COLUMNS":[
-                        "courses_dept",
-                        "courses_avg"
-                    ],
-                    "ORDER":"courses123"
-                }
+                ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
             }
-        ;
+        };
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 56
+            console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect(response.code).to.equal(400);
+            expect.fail('Should not happen');
         });
 
     });
