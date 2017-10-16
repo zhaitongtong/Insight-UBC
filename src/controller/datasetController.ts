@@ -13,6 +13,9 @@ export interface Datasets {
 export default class DatasetController {
 
     private datasets: Datasets = {};
+    public printDataset (){
+        console.log(this.datasets)
+    }
 
     constructor() {
         Log.trace('DatasetController::init()');
@@ -33,13 +36,17 @@ export default class DatasetController {
 
     public getDatasets(): Datasets {
         // if datasets is empty, load all dataset files in ./data from disk
-        try {
-            if (fs.statSync('./data').isDirectory()) {
-                var data: any = fs.readFileSync('./data/courses.json', 'utf8');
-                this.datasets["courses"] = JSON.parse(data); //testing getting info from ./data
+        let that = this
+
+        //if(!that.datasets) {
+        if (1){
+            let links = fs.readdirSync("./data/");
+
+            for (let link of links) {
+                let id = link.split(".")[0];
+                this.datasets[id] = JSON.parse(fs.readFileSync("./data/" + link, 'utf-8'));
             }
-        }catch (e){
-            Log.trace(e);
+            console.log(typeof this.datasets)
         }
         return this.datasets;
     }

@@ -146,7 +146,7 @@ export default class InsightFacade implements IInsightFacade {
     private static datasetController = new DatasetController();
 
     constructor() {
-        var path: string = "src/courses.txt";
+        var path: string = "src/courses.zip";
         if (fs.existsSync(path)) {
             this.courses_dataset = fs.readFileSync(path, 'utf-8');
         } else {
@@ -213,10 +213,12 @@ export default class InsightFacade implements IInsightFacade {
             var options = j_obj["OPTIONS"];
             var columns = options["COLUMNS"];
             var order = options["ORDER"];
+            //console.log("columns is " + columns);
 
             if (columns.length != 0) {
-                var id: string = columns[0].substring(0, columns[0].indexOf("_"));
+                var id: string = columns[0].substring(0,columns[0].indexOf("_"));
                 var path = './src/' + id + ".json";
+                // console.log("path is " + path);
                 var exist = fs.existsSync(path); // fs.access(path) for async?
                 Log.trace("path is "+ exist);
             } else {
@@ -226,7 +228,7 @@ export default class InsightFacade implements IInsightFacade {
             if (exist) {
                 let data: string;
                 var table: Dataset_obj[];
-                if (id == "courses") {
+                if (id === "courses") {
                     data = this.courses_dataset;
                     table = build_table(data);
                 }
@@ -263,7 +265,7 @@ export default class InsightFacade implements IInsightFacade {
                 let ret_obj = {result: body};
                 return fulfill({code: 200, body: ret_obj});
             } else {
-                let ret_obj = {code: 4243, body: {"missing": [id]}};
+                let ret_obj = {code: 424, body: {"missing": [id]}};
                 return reject(ret_obj);
             }
         })
