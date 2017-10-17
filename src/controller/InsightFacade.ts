@@ -26,26 +26,13 @@ dictionary = {
     "courses_uuid": "id",
 };
 
-class Dataset_obj {
-    id: string;
-
-    constructor() {
-        this.id = null;
-    }
-
-    getValue(target: string): any {
-        return null;
-    }
-
-    setValue(target: string, value: string) {
-    }
-}
-
 export default class InsightFacade implements IInsightFacade {
-    private static datasetController = new DatasetController();
+    // private static datasetController = new DatasetController();
 
+    private datasetController: DatasetController;
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
+        this.datasetController = new DatasetController();
     }
 
     /**
@@ -56,9 +43,10 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     addDataset(id: string, content: string): Promise<InsightResponse> {
+        let that = this;
         return new Promise(function (fulfill, reject) {
             try{
-                let dsController = InsightFacade.datasetController;
+                let dsController = that.datasetController;
                 let idExists: boolean = dsController.inMemory(id);
                 dsController.process(id, content)
                     .then(function (result) {
@@ -84,11 +72,12 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     removeDataset(id: string): Promise<InsightResponse> {
+        let that = this;
         return new Promise(function (fulfill, reject) {
             //removeDataset should not reponse with code: 400
             //Delete it to avoid potential risk
             try {
-                let dsController = InsightFacade.datasetController;
+                let dsController = that.datasetController;
                 try {
                     dsController.delete(id);
                     fulfill({code: 204, body: 'the operation was successful.'});
@@ -110,8 +99,9 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     performQuery(query: any): Promise <InsightResponse> {
+        let that = this;
         return new Promise(function (fulfill, reject) {
-            if (!validate(query)) {
+            if (!isValid(query)) {
                 reject({code: 400, body: {"error": "invalid query"}});
                 return;
             }
@@ -124,7 +114,7 @@ export default class InsightFacade implements IInsightFacade {
             var columns = options["COLUMNS"];
             //var order = options["ORDER"];
 
-            let data = InsightFacade.datasetController.getDatasets();
+            let data = that.datasetController.getDatasets();
             if (data.length === 0) {
                 reject({code: 424, body: {"error": "missing dataset"}});
                 return;
@@ -151,7 +141,7 @@ export default class InsightFacade implements IInsightFacade {
     }
 }
 
-function validate(query: any): boolean {
+function isValid(query: any): boolean {
     let ret_obj: InsightResponse = {code: 200, body: "valid"};
     try {
         //var j_query = JSON.stringify(query);
@@ -168,7 +158,6 @@ function validate(query: any): boolean {
 
     if (columns.length == 0)
         return false;
-
 
     for (let column of columns) {
         var value = dictionary[column];

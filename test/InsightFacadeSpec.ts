@@ -109,7 +109,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             let result: any = response.body;
             console.log(result.length); // 49
-            //console.log(result);
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -162,13 +162,65 @@ describe("InsightFacade", function () {
 
     });
 
-    it("All courses", function () {
+    it("Deepmind: Should be able to find sections in a dept with average between 70 and 80", function () {
+
+        let myQ = {
+            "WHERE":{
+                "AND":[
+                    {
+                        "GT":{
+                            "courses_avg":70
+                        }
+                    },
+                    {
+                        "LT":{
+                            "courses_avg":80
+                        }
+                    }
+                ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 64612?
+            console.log(result);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+
+    });
+
+    it("Invalid", function () {
+
+        let myQ = {};
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect.fail;
+            let result: any = response.body;
+            console.log(result.length); // 49
+            //console.log(result);
+        }).catch(function (response: InsightResponse) {
+            //console.log(response.code)
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
+ /*   it("NOT All courses", function () {
 
         let myQ = {
             "WHERE":{
                 "OR":[
                     {
-                        "GT":{
+                        "NOT":{
                             "courses_avg":65
                         }
                     },
@@ -197,5 +249,122 @@ describe("InsightFacade", function () {
             expect.fail('Should not happen');
         });
 
+    });*/
+
+
+    it("Should be able to query a complex valid query", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE":{"OR":[{"AND":[{"GT":{"courses_avg":90}},{"IS":{"courses_dept":"adhe"}}]},{"EQ":{"courses_avg":95}}]},
+            "OPTIONS":{"COLUMNS":["courses_dept","courses_id","courses_avg"],"ORDER":"courses_avg"}
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
     });
+    /*
+        it("Should not be able to query when there is no query or query is undefined.", function () {
+            //this.timeout(100000);
+            let query: any = {};
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail('Should not happen');
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(400);
+            });
+        });
+
+        it("Should not be able to query when COLUMNS is empty.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE": {"AND": [{"GT": {}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
+                "OPTIONS": {"COLUMNS": [],"ORDER": "courses_avg"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(400);
+            });
+        })
+
+        it("Should not be able to query when key is invalid.", function () {
+            //this.timeout(10000);
+            let query: any = {
+                "WHERE":{"OR":[{"AND":[{"GT":{"courses_avg":90}},{"IS":{"courses_dept":"adhe"}}]},{"EQ":{"courses_avg":95}}]},
+                "OPTIONS":{"COLUMNS":["courses_dept","courses_id","courses_avg"],"ORDER":"courses_size"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(400);
+            });
+        });
+
+        it("Should not be able to query when order is invalid.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE":{"OR":[{"AND":[{"GT":{"courses_avg":90}},{"IS":{"courses_dept":"adhe"}}]},{"EQ":{"courses_avg":95}}]},
+                "OPTIONS":{"COLUMNS":["courses_dept","courses_id","courses_avg"],"ORDER": {"courses_size": "courses_avg"},}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(400);
+            });
+        })
+
+        it("Should not be able to query when the logic comparison fails.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE": {"AND": [{"GT": {"courss_avg": "90"}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
+                "OPTIONS": {"COLUMNS": ["courses_dept","courses_avg","courses_uuid"],"ORDER": "courses_avg"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(424);
+            });
+        })
+
+        it("Should not be able to query when the logic comparison fails.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE": {"OR":[{"NOT":{"AND": [{"GT": {"courses_avg": "90"}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"course_dept": "cpsc"}}, {
+                    "AND": [{"GT": {"courses_avg": 20}}]}]}},{"IS": {"courses_uuid": "129*"}}]},
+                "OPTIONS": {"COLUMNS": ["courses_dept","courses_avg","courses_uuid"],"ORDER": "courses_avg"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(424);
+            });
+        })
+
+        it("Should not be able to query when GT is empty.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE": {"AND": [{"GT": {}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
+                "OPTIONS": {"COLUMNS": ["courses_dept","courses_avg","courses_uuid"],"ORDER": "courses_avg"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(400);
+            });
+        })
+
+        it("Should not be able to query when EQ is empty.", function (done) {
+            //this.timeout(100000);
+            let query: any = {
+                "WHERE": {"AND": [{"GT": {}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
+                "OPTIONS": {"COLUMNS": ["courses_dept","courses_avg","courses_uuid"],"ORDER": "courses_avg"}
+            };
+            return facade.performQuery(query).then(function (response: InsightResponse) {
+                expect.fail();
+            }).catch(function (response: InsightResponse) {
+                expect(response.code).to.equal(424);
+            });
+        })*/
+
 });
