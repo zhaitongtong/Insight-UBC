@@ -4,6 +4,7 @@
 
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
+
 var fs = require('fs');
 var request = require('request');
 import {isUndefined} from "util";
@@ -30,6 +31,7 @@ export default class InsightFacade implements IInsightFacade {
     // private static datasetController = new DatasetController();
 
     private datasetController: DatasetController;
+
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
         this.datasetController = new DatasetController();
@@ -45,15 +47,15 @@ export default class InsightFacade implements IInsightFacade {
     addDataset(id: string, content: string): Promise<InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            try{
+            try {
                 let dsController = that.datasetController;
                 let idExists: boolean = dsController.inMemory(id);
                 dsController.process(id, content)
                     .then(function (result) {
-                        if (!idExists){
-                            fulfill({code:204,body: 'the operation was successful and the id already existed'});
-                        }else {
-                            fulfill({code: 201,body: 'the operation was successful and the id already existed'})
+                        if (!idExists) {
+                            fulfill({code: 204, body: 'the operation was successful and the id already existed'});
+                        } else {
+                            fulfill({code: 201, body: 'the operation was successful and the id already existed'})
                         }
                     }).catch(function (err: Error) {
                     reject({code: 400, body: 'fail to precess the dataset in addDataset'});
@@ -83,7 +85,10 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill({code: 204, body: 'the operation was successful.'});
                 }
                 catch (e) {
-                    reject({code: 404, body:'the operation was unsuccessful because the delete was  for a resource that was not previously added.'});
+                    reject({
+                        code: 404,
+                        body: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'
+                    });
                 }
             } catch (err) {
                 reject({code: 400, error: err.message});
@@ -98,7 +103,7 @@ export default class InsightFacade implements IInsightFacade {
      * @return Promise <InsightResponse>
      *
      * */
-    performQuery(query: any): Promise <InsightResponse> {
+    performQuery(query: any): Promise<InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             if (!isValid(query)) {
@@ -125,6 +130,7 @@ export default class InsightFacade implements IInsightFacade {
                 if (courseIn(course, where))
                     result1.push(course);
             }
+
             let result2: any = [];
             for (let i = 0; i < result1.length; i++) {
                 let course = result1[i];
@@ -197,80 +203,125 @@ function check_where(where: any): boolean {
     if (Object.keys(where).length !== 1)
         return false;
     let top = Object.keys(where)[0];
-    if (top === "AND" || top === "OR") {
-        let filters = where[top];
-        for (let i = 0; i < filters.length; i++) {
-            if (!check_where(filters[i]))
-                return false;
+    switch (top) {
+        case "AND": {
+            let filters = where[top];
+            for (let i = 0; i < filters.length; i++) {
+                if (!check_where(filters[i]))
+                    return false;
+            }
+            return true;
         }
-        return true;
+
+        case "OR": {
+            let filters = where[top];
+            for (let i = 0; i < filters.length; i++) {
+                if (!check_where(filters[i]))
+                    return false;
+            }
+            return true;
+        }
+        case "LT": {
+            let m = where[top];
+            let mKey = Object.keys(m)[0];
+            let mValue = m[mKey];
+            return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit');
+
+        }
+        case "GT": {
+            let m = where[top];
+            let mKey = Object.keys(m)[0];
+            let mValue = m[mKey];
+            return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit');
+
+        }
+        case "EQ": {
+            let m = where[top];
+            let mKey = Object.keys(m)[0];
+            let mValue = m[mKey];
+            return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit');
+
+        }
+
+        case "IS": {
+            let s = where[top];
+            let sKey = Object.keys(s)[0];
+            let sValue = s[sKey];
+            return isString(sValue) && (sKey === 'courses_dept' || sKey === 'courses_id' || sKey === 'courses_instructor' || sKey === 'courses_title' || sKey === 'courses_uuid');
+
+        }
+
+        case "NOT": {
+            return check_where(where[top]);
+        }
+
+        default: {
+            return false
+        }
+
     }
-    else if (top === "LT" || top === "GT" || top === "EQ") {
-        let m = where[top];
-        let mKey = Object.keys(m)[0];
-        let mValue = m[mKey];
-        return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit');
-    }
-    else if (top === "IS") {
-        let s = where[top];
-        let sKey = Object.keys(s)[0];
-        let sValue = s[sKey];
-        return isString(sValue) && (sKey === 'courses_dept' || sKey === 'courses_id' || sKey === 'courses_instructor' || sKey === 'courses_title' || sKey === 'courses_uuid');
-    }
-    else if (top === "NOT")
-        return check_where(where[top]);
-    return false;
 }
 
-function courseIn(course: any, where: any) : boolean {
+function courseIn(course: any, where: any): boolean {
     let top = Object.keys(where)[0];
-    if (top === "AND") {
-        let filters = where[top];
-        for (let i = 0; i < filters.length; i++) {
-            if (!courseIn(course, filters[i]))
-                return false;
+
+    switch (top) {
+        case "AND": {
+            let filters = where[top];
+            for (let i = 0; i < filters.length; i++) {
+                if (!courseIn(course, filters[i]))
+                    return false;
+            }
+            return true;
         }
-        return true;
-    } else if (top === "OR") {
-        let filters = where[top];
-        for (let i = 0; i < filters.length; i++) {
-            if (courseIn(course, filters[i]))
-                return true;
-        }
-        return false;
-    } else if (top === "EQ") {
-        return course[Object.keys(where[top])[0]] === where[top][Object.keys(where[top])[0]];
-    } else if (top === "LT") {
-        return course[Object.keys(where[top])[0]] < where[top][Object.keys(where[top])[0]];
-    } else if (top === "GT") {
-        return course[Object.keys(where[top])[0]] > where[top][Object.keys(where[top])[0]];
-    } else if (top === "IS") {
-        let scomparison = where[top];
-        let s_key = Object.keys(scomparison)[0];
-        let s_value: string = scomparison[s_key];
-        let c_value: string = course[s_key];
-        let hasStarEnd = (s_value.charAt(s_value.length-1) === '*');
-        if (hasStarEnd)
-            s_value = s_value.substring(0, s_value.length-1);
-        let hasStarFront = (s_value.charAt(0) === '*');
-        if (hasStarFront)
-            s_value = s_value.substr(1);
-        if (s_value.length == 0)
+        case "OR" : {
+            let filters = where[top];
+            for (let i = 0; i < filters.length; i++) {
+                if (courseIn(course, filters[i]))
+                    return true;
+            }
             return false;
-        let start = 0;
-        let valid = false;
-        while (!valid && start < c_value.length) {
-            let pos = c_value.indexOf(s_value, start);
-            if (pos < 0)
-                break;
-            start = pos + 1;
-            if ((pos > 0 && !hasStarFront) || ((pos + s_value.length) < c_value.length && !hasStarEnd))
-                continue;
-            valid = true;
         }
-        return valid;
-    } else if (top === "NOT") {
-        return !courseIn(course, where);
+        case  "EQ": {
+            return course[Object.keys(where[top])[0]] === where[top][Object.keys(where[top])[0]];
+        }
+        case "LT": {
+            return course[Object.keys(where[top])[0]] < where[top][Object.keys(where[top])[0]];
+        }
+
+        case"GT": {
+            return course[Object.keys(where[top])[0]] > where[top][Object.keys(where[top])[0]];
+        }
+        case"IS": {
+            let scomparison = where[top];
+            let s_key = Object.keys(scomparison)[0];
+            let s_value: string = scomparison[s_key];
+            let c_value: string = course[s_key];
+            let hasStarEnd = (s_value.charAt(s_value.length - 1) === '*');
+            if (hasStarEnd)
+                s_value = s_value.substring(0, s_value.length - 1);
+            let hasStarFront = (s_value.charAt(0) === '*');
+            if (hasStarFront)
+                s_value = s_value.substr(1);
+            if (s_value.length == 0)
+                return false;
+            let start = 0;
+            let valid = false;
+            while (!valid && start < c_value.length) {
+                let pos = c_value.indexOf(s_value, start);
+                if (pos < 0)
+                    break;
+                start = pos + 1;
+                if ((pos > 0 && !hasStarFront) || ((pos + s_value.length) < c_value.length && !hasStarEnd))
+                    continue;
+                valid = true;
+            }
+            return valid;
+        }
+        case "NOT": {
+            return !courseIn(course, where);
+        }
+        default:
+            return false;
     }
-    return false;
 }

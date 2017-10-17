@@ -14,7 +14,7 @@ describe("InsightFacade", function () {
     var test2: any;
     var facade: InsightFacade = null;
 
-    var zipFileContents : string = null;
+    var zipFileContents: string = null;
     var facade: InsightFacade = null;
 
     let fs = require('fs');
@@ -63,7 +63,7 @@ describe("InsightFacade", function () {
 
     //Test for removeDataset
 
-    it("Should able to remove a dataset (204)", function(){
+    it("Should able to remove a dataset (204)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
@@ -71,7 +71,7 @@ describe("InsightFacade", function () {
         });
     })
 
-    it("Should not able to remove a dataset (404)", function(){
+    it("Should not able to remove a dataset (404)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect.fail;
         }).catch(function (response: InsightResponse) {
@@ -83,7 +83,7 @@ describe("InsightFacade", function () {
 
     it("Should be able to add a new courses dataset (201 or 204)", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(204||204);
+            expect(response.code).to.equal(204 || 204);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -92,17 +92,17 @@ describe("InsightFacade", function () {
     it("Simple query", function () {
 
         let myQ = {
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
+            "WHERE": {
+                "GT": {
+                    "courses_avg": 97
                 }
             },
-            "OPTIONS":{
-                "COLUMNS":[
+            "OPTIONS": {
+                "COLUMNS": [
                     "courses_dept",
                     "courses_avg"
-                    ],
-                "ORDER":"courses_avg"
+                ],
+                "ORDER": "courses_avg"
             }
         };
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
@@ -119,36 +119,36 @@ describe("InsightFacade", function () {
     it("Complex query", function () {
 
         let myQ = {
-            "WHERE":{
-                "OR":[
+            "WHERE": {
+                "OR": [
                     {
-                        "AND":[
+                        "AND": [
                             {
-                                "GT":{
-                                    "courses_avg":90
+                                "GT": {
+                                    "courses_avg": 90
                                 }
                             },
                             {
-                                "IS":{
-                                    "courses_dept":"adhe"
+                                "IS": {
+                                    "courses_dept": "adhe"
                                 }
                             }
                         ]
                     },
                     {
-                        "EQ":{
-                            "courses_avg":95
+                        "EQ": {
+                            "courses_avg": 95
                         }
                     }
                 ]
             },
-            "OPTIONS":{
-                "COLUMNS":[
+            "OPTIONS": {
+                "COLUMNS": [
                     "courses_dept",
                     "courses_id",
                     "courses_avg"
                 ],
-                "ORDER":"courses_avg"
+                "ORDER": "courses_avg"
             }
         };
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
@@ -165,27 +165,27 @@ describe("InsightFacade", function () {
     it("Deepmind: Should be able to find sections in a dept with average between 70 and 80", function () {
 
         let myQ = {
-            "WHERE":{
-                "AND":[
+            "WHERE": {
+                "AND": [
                     {
-                        "GT":{
-                            "courses_avg":70
+                        "GT": {
+                            "courses_avg": 70
                         }
                     },
                     {
-                        "LT":{
-                            "courses_avg":80
+                        "LT": {
+                            "courses_avg": 80
                         }
                     }
                 ]
             },
-            "OPTIONS":{
-                "COLUMNS":[
+            "OPTIONS": {
+                "COLUMNS": [
                     "courses_dept",
                     "courses_id",
                     "courses_avg"
                 ],
-                "ORDER":"courses_avg"
+                "ORDER": "courses_avg"
             }
         };
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
@@ -214,49 +214,49 @@ describe("InsightFacade", function () {
 
     });
 
- /*   it("NOT All courses", function () {
+    /*   it("NOT All courses", function () {
 
-        let myQ = {
-            "WHERE":{
-                "OR":[
-                    {
-                        "NOT":{
-                            "courses_avg":65
-                        }
-                    },
-                    {
-                        "LT":{
-                            "courses_avg":75
-                        }
-                    }
-                ]
-            },
-            "OPTIONS":{
-                "COLUMNS":[
-                    "courses_dept",
-                    "courses_id",
-                    "courses_avg"
-                ],
-                "ORDER":"courses_avg"
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            console.log(result.length); // 64612?
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
+           let myQ = {
+               "WHERE":{
+                   "OR":[
+                       {
+                           "NOT":{
+                               "courses_avg":65
+                           }
+                       },
+                       {
+                           "LT":{
+                               "courses_avg":75
+                           }
+                       }
+                   ]
+               },
+               "OPTIONS":{
+                   "COLUMNS":[
+                       "courses_dept",
+                       "courses_id",
+                       "courses_avg"
+                   ],
+                   "ORDER":"courses_avg"
+               }
+           };
+           return facade.performQuery(myQ).then(function (response: InsightResponse) {
+               expect(response.code).to.equal(200);
+               let result: any = response.body;
+               console.log(result.length); // 64612?
+               //console.log(result);
+           }).catch(function (response: InsightResponse) {
+               expect.fail('Should not happen');
+           });
 
-    });*/
+       });*/
 
 
     it("Should be able to query a complex valid query", function () {
         //this.timeout(100000);
         let query: any = {
-            "WHERE":{"OR":[{"AND":[{"GT":{"courses_avg":90}},{"IS":{"courses_dept":"adhe"}}]},{"EQ":{"courses_avg":95}}]},
-            "OPTIONS":{"COLUMNS":["courses_dept","courses_id","courses_avg"],"ORDER":"courses_avg"}
+            "WHERE": {"OR": [{"AND": [{"GT": {"courses_avg": 90}}, {"IS": {"courses_dept": "adhe"}}]}, {"EQ": {"courses_avg": 95}}]},
+            "OPTIONS": {"COLUMNS": ["courses_dept", "courses_id", "courses_avg"], "ORDER": "courses_avg"}
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);

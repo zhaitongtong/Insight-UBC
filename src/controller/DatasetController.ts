@@ -1,4 +1,5 @@
 import Log from "../Util";
+
 let fs = require('fs');
 let JSZip = require('jszip');
 
@@ -20,9 +21,9 @@ export default class DatasetController {
         Log.trace('DatasetController::init()');
     }
 
-    public getDataset(id:string):any{
-        let exist : boolean = fs.existsSync('./data/' + id + '.json')
-        if (!exist){
+    public getDataset(id: string): any {
+        let exist: boolean = fs.existsSync('./data/' + id + '.json')
+        if (!exist) {
             return null
         }
         return id
@@ -55,9 +56,9 @@ export default class DatasetController {
 
         let that = this;
 
-        let processedDataset : any = [];
-        var dictionary: { [course: string]:{} } = {};
-        let coursePromises:any = [];
+        let processedDataset: any = [];
+        var dictionary: { [course: string]: {} } = {};
+        let coursePromises: any = [];
 
         return new Promise(function (fulfill, reject) {
             try {
@@ -68,12 +69,13 @@ export default class DatasetController {
 
                     //if the datasets already has this id, it already exists
 
-                    if(that.datasets && that.datasets.hasOwnProperty(id)) {
-                        alreadyExisted = true;}
+                    if (that.datasets && that.datasets.hasOwnProperty(id)) {
+                        alreadyExisted = true;
+                    }
 
                     if (id === "courses") {
-                        zip.forEach(function(relativePath: string, file: JSZipObject) { // get each file in the zip
-                            if (!file.dir){ // (file.dir == false) access the file in the directory
+                        zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
+                            if (!file.dir) { // (file.dir == false) access the file in the directory
                                 var promise = file.async('string').then(function (data) { // for each file in "courses"
                                     var coursedata = JSON.parse(data); // file data type: JSON object
                                     var coursename = file.name.substring(8); //substring 8 to get rid of "courses/"
@@ -106,40 +108,39 @@ export default class DatasetController {
                     }
 
 
-
                     if (id === "courses") {
-                    Promise.all(coursePromises).then(function () {
-                        fulfill(alreadyExisted?201:204);  // all promises are resolved
-                        if (!alreadyExisted) {
-                            processedDataset = dictionary;
-                            let allCourses = Object.keys(processedDataset);
+                        Promise.all(coursePromises).then(function () {
+                            fulfill(alreadyExisted ? 201 : 204);  // all promises are resolved
+                            if (!alreadyExisted) {
+                                processedDataset = dictionary;
+                                let allCourses = Object.keys(processedDataset);
 
-                            for (let i = 0; i < allCourses.length; i++) {
-                                let eachCourse = allCourses[i]; // AANB504
-                                let courses = processedDataset[eachCourse]['result'];
-                                for (let j = 0; j < courses.length; j++) {
-                                    let course = courses[j];
-                                    let c: any= {};
-                                    c["courses_dept"] = course["dept"];
-                                    c["courses_id"] = course["id"];
-                                    c["courses_avg"] = course["avg"];
-                                    c["courses_instructor"] = course["instructor"];
-                                    c["courses_title"] = course["title"];
-                                    c["courses_pass"] = course["pass"];
-                                    c["courses_fail"] = course["fail"];
-                                    c["courses_audit"] = course["audit"];
-                                    c["courses_uuid"] = course["uuid"];
+                                for (let i = 0; i < allCourses.length; i++) {
+                                    let eachCourse = allCourses[i]; // AANB504
+                                    let courses = processedDataset[eachCourse]['result'];
+                                    for (let j = 0; j < courses.length; j++) {
+                                        let course = courses[j];
+                                        let c: any = {};
+                                        c["courses_dept"] = course["dept"];
+                                        c["courses_id"] = course["id"];
+                                        c["courses_avg"] = course["avg"];
+                                        c["courses_instructor"] = course["instructor"];
+                                        c["courses_title"] = course["title"];
+                                        c["courses_pass"] = course["pass"];
+                                        c["courses_fail"] = course["fail"];
+                                        c["courses_audit"] = course["audit"];
+                                        c["courses_uuid"] = course["uuid"];
 
-                                    mydataset.push(c);
+                                        mydataset.push(c);
+                                    }
                                 }
-                            }
 
-                            that.save(id, processedDataset);
-                        }
+                                that.save(id, processedDataset);
+                            }
                         })
                     }
 
-                }).catch(function (err:any) {
+                }).catch(function (err: any) {
                     Log.trace('DatasetController.process method error: can not zip the file.');
                     reject(err);
                 });
@@ -162,19 +163,20 @@ export default class DatasetController {
         var dir = './data';
 
         let fs = require('fs');
-        if (!fs.existsSync(dir)){ //if ./data directory doesn't already exist, create
+        if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
             fs.mkdirSync(dir);
         }
 
-        fs.writeFile("./data/" +id+ '.json', JSON.stringify(processedDataset), function (err:any) {
+        fs.writeFile("./data/" + id + '.json', JSON.stringify(processedDataset), function (err: any) {
             if (err) {
                 Log.trace("Error writing file");
             }
             Log.trace('Saved to /data');
         });
 
-        this.datasets[id]=this.getDatasets();
+        this.datasets[id] = this.getDatasets();
     }
+
     //log.conslo
     //infinit loop
     //repsponce body no code.
@@ -193,7 +195,7 @@ export default class DatasetController {
 
     public inMemory(id: string): boolean {
         let fs = require('fs');
-        var path = './data/'+ id +".json";
+        var path = './data/' + id + ".json";
         return fs.existsSync(path); // fs.access(path) for async?
     }
 }
