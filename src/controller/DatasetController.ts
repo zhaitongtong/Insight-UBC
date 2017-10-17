@@ -31,13 +31,18 @@ export default class DatasetController {
 
     public getDatasets(): any {
         // if datasets is empty, load all dataset files in ./data from disk
-        /*try {
-            if (fs.statSync('./data/').isDirectory()) {
-                var data: any = (fs.readFileSync('./data/courses.zip')).toString('base64')
-                this.datasets["courses"] = JSON.parse(data); //testing getting info from ./data
+        /*var courses :any = this.datasets["courses"];
+
+        if (courses === undefined) {
+
+            var fs = require('fs');
+
+            if (fs.existsSync("./data/courses.json")) {
+
+                this.datasets["courses"] = JSON.parse(fs.readFileSync("./data/courses.json", "utf8"));
+
             }
-        }catch (e){
-            Log.trace(e);
+
         }*/
         return mydataset;
         //return this.datasets

@@ -26,6 +26,11 @@ dictionary = {
     "courses_audit": "Audit",
     "courses_uuid": "id",
 };
+interface Datasets {
+    [id: string]: {};
+}
+
+var datasets: Datasets = {};
 
 export default class InsightFacade implements IInsightFacade {
     // private static datasetController = new DatasetController();
