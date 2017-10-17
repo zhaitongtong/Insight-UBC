@@ -30,14 +30,14 @@ export default class DatasetController {
 
     public getDatasets(): any {
         // if datasets is empty, load all dataset files in ./data from disk
-        try {
+        /*try {
             if (fs.statSync('./data/').isDirectory()) {
-                var data: any = fs.readFileSync('./data/courses.json', 'utf8');
+                var data: any = (fs.readFileSync('./data/courses.zip')).toString('base64')
                 this.datasets["courses"] = JSON.parse(data); //testing getting info from ./data
             }
         }catch (e){
             Log.trace(e);
-        }
+        }*/
         return mydataset;
         //return this.datasets
     }

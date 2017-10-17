@@ -22,7 +22,7 @@ describe("InsightFacade", function () {
 
     before(function () {
         Log.info('InsightController::before() - start');
-        zipFileContents = new Buffer(fs.readFileSync('courses.zip')).toString('base64');
+        zipFileContents = new Buffer(fs.readFileSync('./data/courses.zip')).toString('base64');
         /*try {
             fs.unlinkSync('./id.json');
         } catch (err) {
@@ -53,14 +53,13 @@ describe("InsightFacade", function () {
         });
     });
 
-    /*it("Should not be able to add an invalid dataset (400)", function () {
+    it("Should not be able to add an invalid dataset (400)", function () {
         return facade.addDataset('courses', 'some random bytes').then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
         });
     });
-*/
 
     //Test for removeDataset
 
@@ -82,9 +81,9 @@ describe("InsightFacade", function () {
 
     //Test for perform Q
 
-    it("Courses: Should be able to reload a new dataset (204)", function () {
+    it("Should be able to add a new courses dataset (201 or 204)", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(204);
+            expect(response.code).to.equal(204||204);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
