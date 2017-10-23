@@ -76,49 +76,63 @@ export default class InsightFacade implements IInsightFacade {
         Log.trace('DatasetController::process( ' + id + '... )');
         let that = this;
         return new Promise(function (fulfill, reject) {
+            let that = this;
+            var dictionary: { [course: string]:{} } = {};
+
             try {
                 let myZip = new JSZip();
-                var promises: any = [];
+                let promises:any = [];
+
                 myZip.loadAsync(data, {base64: true}).then(function (zip: JSZip) {
                     Log.trace('DatasetController::process(..) - unzipped');
-                    let that2=this;
-                    let arrayofrooms:any=[];
                     let arrayofhrefs:any=[];
-                    let processedDataset: any = {};
-                    zip.folder("courses").forEach(function (relativePath, file) {
-                        var promise = file.async("string").then(function (processedfile) {
-                            let obj2 = JSON.parse(processedfile);
-                            let i = 0;
-                            for (i = 0; i < obj2.result.length; i++) {
-                                let c: any = {};
-                                if (!(typeof (obj2.result[0]) === 'undefined')) {
-                                    c[id + '_uuid'] = obj2.result[i].id;
-                                    c[id + '_id'] = obj2.result[i].Course;
-                                    c[id + '_dept'] = obj2.result[i].Subject;
-                                    c[id + '_title'] = obj2.result[i].Title;
-                                    c[id + '_avg'] = obj2.result[i].Avg;
-                                    c[id + '_instructor'] = obj2.result[i].Professor;
-                                    c[id + '_pass'] = obj2.result[i].Pass;
-                                    c[id + '_fail'] = obj2.result[i].Fail;
-                                    c[id + '_audit'] = obj2.result[i].Audit;
-                                    c[id + '_year'] = obj2.result[i].Section;
-                                    processedDataset.add(c);
-                                }
+                    let processedDataset: any = {}
+
+                    var alreadyExisted: boolean = false;
+                    if(datasets && datasets.hasOwnProperty(id)) {
+                        alreadyExisted = true;
+                    }
+
+                    if(id==="courses"){
+                        zip.forEach(function (relativePath, file: JSZipObject) {
+                            if (!file.dir){
+                                var promise = file.async("string").then(function (data) {
+                                    let coursedata = JSON.parse(data);
+                                    var processedCourseData: any = {};
+                                    for (var i = 0; i < coursedata.result.length; i++) {
+                                        let c : any = {};
+                                        if (!(typeof (coursedata.result[0]) === 'undefined')) {
+                                            c[id + '_uuid'] = coursedata.result[i].id;
+                                            c[id + '_id'] = coursedata.result[i].Course;
+                                            c[id + '_dept'] = coursedata.result[i].Subject;
+                                            c[id + '_title'] = coursedata.result[i].Title;
+                                            c[id + '_avg'] = coursedata.result[i].Avg;
+                                            c[id + '_instructor'] = coursedata.result[i].Professor;
+                                            c[id + '_pass'] = coursedata.result[i].Pass;
+                                            c[id + '_fail'] = coursedata.result[i].Fail;
+                                            c[id + '_audit'] = coursedata.result[i].Audit;
+                                            processedDataset.add(c);
+                                        }
+                                    }
+                                    dictionary["courses"] = {result: processedDataset};
+                                    datasets[id] = processedDataset;
+                                }, function (error) {
+                                    reject(error);
+                                });
+                                promises.push(promise);
                             }
-                        }, function (error) {
-                            reject(error);
                         });
-                        promises.push(promise);
-                    });
-                    Promise.all(promises).catch(function (err) {
-                        reject(false);
-                    }).then(function () {
-                        if (processedDataset.data.length == 0) {
+                        Promise.all(promises).catch(function (err) {
                             reject(false);
-                        }
-                        save(id, processedDataset);
-                        fulfill(true);
-                    });
+                        }).then(function () {
+                            if (processedDataset.data.length == 0) {
+                                reject(false);
+                            }
+                            save(id, processedDataset);
+                            fulfill(true);
+                        });
+                    }
+
                 }).catch(function (err:any) {
                     Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
                     reject(false);
@@ -152,7 +166,7 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    /*private delete(id: string) {
+    private delete(id: string) {
         let fs = require('fs');
         var path = './data/' + id + '.json';
         if (datasets[id]) {
@@ -162,7 +176,7 @@ export default class InsightFacade implements IInsightFacade {
         if (fs.statSync(path).isFile()) {
             fs.unlink(path);
         }
-    }*/
+    }
 
     /**
      * Perform a query on UBCInsight.
