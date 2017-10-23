@@ -46,22 +46,27 @@ export default class InsightFacade implements IInsightFacade {
      * */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         let that = this;
+        var flag = 1;
         return new Promise(function (fulfill, reject) {
             try {
-                let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
+
+                if(datasets.hasOwnProperty(id) && !isUndefined(datasets[id])){
+                    flag=0; // if id doesnt exist
+                }
+
                 that.process(id, content).then(function (result: any) {
-                        if (!idExists) {
-                            //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
-                            fulfill({code: 204, body: {success: result}});
+                        if (result == true) {
+                            if(flag == 1){
+                                fulfill({code: 204, body: {success: result}});
+                            }
                         } else {
-                            //fulfill({code: 201, body: 'the operation was successful and the id already existed'})
                             fulfill({code: 201, body: {success: result}});
                         }
                     }).catch(function (err: Error) {
-                    reject({code: 400, error: {err: err.message}});
+                        reject({code: 400, body: {err: err.message}});
                 })
             } catch (err) {
-                reject({code: 400, error: {err: err.message}});
+                reject({code: 400, body: {err: err.message}});
             }
         });
     };
@@ -106,7 +111,7 @@ export default class InsightFacade implements IInsightFacade {
                                     }
                                     dictionary["courses"] = {result: processedDataset};
                                     datasets[id] = processedDataset;
-                                    save(id,processedDataset);
+                                    //save(id,processedDataset);
                                 }, function (error) {
                                     reject(error);
                                 });
@@ -116,7 +121,7 @@ export default class InsightFacade implements IInsightFacade {
                         Promise.all(promises).catch(function (err) {
                             reject(false);
                         }).then(function () {
-                            if (processedDataset.data.length == 0) {
+                            if (processedDataset.data.length === 0) {
                                 reject(false);
                             }
                             save(id, processedDataset);
@@ -146,26 +151,31 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     removeDataset(id: string): Promise<InsightResponse> {
+        let that = this;
         return new Promise(function (fulfill, reject) {
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
+                that.delete(id);
                 delete datasets[id];
                 fulfill({code: 204, body: {success: "the operation was successful."}})
             } else {
-                reject({code: 404, error: {err: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'}});
+                reject({code: 404, body: {err: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'}});
             }
         });
     }
 
     private delete(id: string) {
-        let fs = require('fs');
-        var path = './data/' + id + '.json';
-        if (datasets[id]) {
-            delete datasets[id];
-            datasets[id] = null;
-        }
-        if (fs.statSync(path).isFile()) {
-            fs.unlink(path);
+        Log.trace('DatasetController::delete( ' + id + '... )');
+        try {
+            var stats = fs.lstatSync('./data/' + id + ".json");
+            if (!stats.isFile()) {
+                throw new Error("Trying to delete dataset that does not exist")
+            }
+            fs.unlinkSync('./data/' + id + ".json");
+            return true;
+        } catch (err) {
+            Log.trace('DatasetController:delete(..) - ERROR: ' + err);
+            return false;
         }
     }
 
@@ -179,7 +189,7 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: any): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
             if (!isValid(query)) {
-                reject({code: 400,error: {}});
+                reject({code: 400, body: {"error": "not valid"}});
             } else {
                 let where = query["WHERE"];
                 let options = query["OPTIONS"];
@@ -188,8 +198,7 @@ export default class InsightFacade implements IInsightFacade {
 
                 let data: any = datasets["courses"];
                 if (data.length === 0) {
-                    reject({code: 424, error: {"error": "missing dataset"}});
-                    return;
+                    reject({code: 424, body: {"error": "missing dataset"}});
                 }
 
                 let result1: any = [];
@@ -208,8 +217,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                     result2.push(c);
                 }
-
-                fulfill({code: 200,body: {result: result2}});
+                fulfill({code: 200, body: {result: result2}});
             }
         });
     }
