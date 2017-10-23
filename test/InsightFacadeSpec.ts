@@ -332,7 +332,8 @@ describe("InsightFacade", function () {
     });
 
     it("Should not be able to query when the logic comparison fails.", function (done) {
-        //this.timeout(100000);
+        //
+        // this.timeout(100000);
         let query: any = {
             "WHERE": {"AND": [{"GT": {"courss_avg": "90"}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
             "OPTIONS": {"COLUMNS": ["courses_dept","courses_avg","courses_uuid"],"ORDER": "courses_avg"}

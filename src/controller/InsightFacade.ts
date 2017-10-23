@@ -93,23 +93,26 @@ export default class InsightFacade implements IInsightFacade {
                             if (!file.dir){
                                 var promise = file.async("string").then(function (data) {
                                     let coursedata = JSON.parse(data);
+                                    var processedDataset: any = [];
                                     for (var i = 0; i < coursedata.result.length; i++) {
-                                        let c : any = {};
-                                        if (!(typeof (coursedata.result[0]) === 'undefined')) {
-                                            c[id + '_uuid'] = coursedata.result[i].id;
-                                            c[id + '_id'] = coursedata.result[i].Course;
-                                            c[id + '_dept'] = coursedata.result[i].Subject;
-                                            c[id + '_title'] = coursedata.result[i].Title;
-                                            c[id + '_avg'] = coursedata.result[i].Avg;
-                                            c[id + '_instructor'] = coursedata.result[i].Professor;
-                                            c[id + '_pass'] = coursedata.result[i].Pass;
-                                            c[id + '_fail'] = coursedata.result[i].Fail;
-                                            c[id + '_audit'] = coursedata.result[i].Audit;
-                                            processedDataset.add(c);
+                                        if (typeof coursedata.result[i].hasOwnProperty("Course") && datasets.hasOwnProperty(id)) {
+                                            var processed_course_data = {
+                                                dept: coursedata.result[i].Subject,
+                                                id: coursedata.result[i].Course,
+                                                avg: coursedata.result[i].Avg,
+                                                instructor: coursedata.result[i].Professor,
+                                                title: coursedata.result[i].Title,
+                                                pass: coursedata.result[i].Pass,
+                                                fail: coursedata.result[i].Fail,
+                                                audit: coursedata.result[i].Audit,
+                                                uuid: coursedata.result[i]["id"].toString(),
+                                            };
+                                             processedDataset.push(processed_course_data);
                                         }
                                     }
                                     dictionary["courses"] = {result: processedDataset};
                                     datasets[id] = processedDataset;
+                                    save(id,processedDataset);
                                 }, function (error) {
                                     reject(error);
                                 });
@@ -219,7 +222,6 @@ export default class InsightFacade implements IInsightFacade {
 }
 
 function save(id: string, processedDataset: any) {
-    let that = this;
     var dir = './data';
 
     if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
@@ -229,11 +231,12 @@ function save(id: string, processedDataset: any) {
     fs.writeFile("'./data/" + id + '.json', JSON.stringify(processedDataset), function (err: any) {
         if (err) {
             Log.trace("Error writing file");
+        }else{
+            Log.trace('successfully saved to /data');
         }
-        Log.trace('successfully saved to /data');
     });
 
-    datasets[id] = that.getDatasets();
+    //datasets[id] = that.getDatasets();
 }
 
 function isValid(query: any): boolean {
