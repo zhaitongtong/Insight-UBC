@@ -5,13 +5,11 @@
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
 
+// my import
 let fs = require('fs');
 let JSZip = require('jszip');
-
 var request = require('request');
 import {isUndefined} from "util";
-
-// my import
 import {isNumber} from "util";
 import {isString} from "util";
 
@@ -35,9 +33,6 @@ interface Datasets {
 var datasets: Datasets = {};
 
 export default class InsightFacade implements IInsightFacade {
-    // private static datasetController = new DatasetController();
-
-    //private datasetController: DatasetController;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
@@ -55,21 +50,20 @@ export default class InsightFacade implements IInsightFacade {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                //let dsController = that.datasetController;
                 let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
-                //console.log("idExist is "+idExists);
-                that.process(id, content)
-                    .then(function (result: any) {
-                        if (!idExists) {
-                            fulfill({code: 204, body: 'the operation was successful and the id already existed'});
+                that.process(id, content).then(function (result: any) {
+                        if (result) {
+                            //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
+                            fulfill({code: 204, body: {success: result}});
                         } else {
-                            fulfill({code: 201, body: 'the operation was successful and the id already existed'})
+                            //fulfill({code: 201, body: 'the operation was successful and the id already existed'})
+                            fulfill({code: 201, body: {success: result}});
                         }
                     }).catch(function (err: Error) {
-                    reject({code: 400, body: 'fail to precess the dataset in addDataset'});
+                    reject({code: 400, body: {err: err.message}});
                 })
             } catch (err) {
-                reject({code: 400, body: 'other error in addDataset'});
+                reject({code: 400, body: {err: err.message}});
             }
         });
     };
@@ -81,7 +75,6 @@ export default class InsightFacade implements IInsightFacade {
     }*/
 
     private process(id: string, data: any): Promise<boolean> {
-        let that = this;
         let processedDataset: any = {};
         var dictionary: { [course: string]: {} } = {};
         let coursePromises: any = [];
@@ -101,7 +94,6 @@ export default class InsightFacade implements IInsightFacade {
                                     var promise = file.async('string').then(function (data) { // for each file in "courses"
                                         var coursedata = JSON.parse(data); // file data type: JSON object
                                         var coursename = file.name.substring(8);
-                                        // Log.trace("Course Name: " + coursename);
                                         var processedCourseData: any = [];
                                         if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
                                             for (var i = 0; i < coursedata.result.length; i++) {
@@ -121,7 +113,7 @@ export default class InsightFacade implements IInsightFacade {
                                             var final = {
                                                 result: processedCourseData
                                             };
-                                            dictionary[coursename] = final; //save coursedata to dict[coursename]
+                                            dictionary[coursename] = final;
                                         }
                                     });
                                     coursePromises.push(promise);
@@ -130,13 +122,13 @@ export default class InsightFacade implements IInsightFacade {
                         }
                         if (id === "courses") {
                             Promise.all(coursePromises).then(function () {
-                                fulfill(alreadyExisted ? 201 : 204);  // all promises are resolved
+                                fulfill(alreadyExisted ? 201 : 204);
                                 if (!alreadyExisted) {
                                     processedDataset = dictionary;
                                     let allCourses = Object.keys(processedDataset);
                                     let mydataset: any = [];
                                     for (let i = 0; i < allCourses.length; i++) {
-                                        let eachCourse = allCourses[i]; // AANB504
+                                        let eachCourse = allCourses[i];
                                         let courses = processedDataset[eachCourse]['result'];
                                         for (let j = 0; j < courses.length; j++) {
                                             let course = courses[j];
@@ -150,45 +142,23 @@ export default class InsightFacade implements IInsightFacade {
                                             c["courses_fail"] = course["fail"];
                                             c["courses_audit"] = course["audit"];
                                             c["courses_uuid"] = course["uuid"];
-
                                             mydataset.push(c);
                                         }
                                     }
                                     datasets[id] = mydataset;
-                                    //that.save(id, processedDataset);
+                                    save(id, processedDataset);
                                 }
                             })
                         }
-
                     }).catch(function (err: any) {
-                    Log.trace('DatasetController.process method error: can not zip the file.');
-                    reject(err);
+                        Log.trace('DatasetController.process method error: can not zip the file.');
+                        reject(err);
                 });
-
             } catch (err) {
                 Log.trace('DatasetController.process method error.');
                 reject(err);
             }
         });
-    }
-
-    private save(id: string, processedDataset: any) {
-        let that = this;
-        var dir = './data';
-
-        let fs = require('fs');
-        if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
-            fs.mkdirSync(dir);
-        }
-
-        fs.writeFile("'./data/" + id + '.json', JSON.stringify(processedDataset), function (err: any) {
-            if (err) {
-                Log.trace("Error writing file");
-            }
-            Log.trace('successfully saved to /data');
-        });
-
-        datasets[id] = that.getDatasets();
     }
 
     private getDatasets(): any {
@@ -202,20 +172,14 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     removeDataset(id: string): Promise<InsightResponse> {
-        let that = this;
         return new Promise(function (fulfill, reject) {
-            //removeDataset should not reponse with code: 400
-            //Delete it to avoid potential risk
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
                 delete datasets[id];
                 fulfill({code: 204, body: 'the operation was successful.'});
                 return;
             } else {
-                reject({
-                    code: 404,
-                    body: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'
-                });
+                reject({code: 404,body: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'});
                 return;
             }
         });
@@ -244,21 +208,12 @@ export default class InsightFacade implements IInsightFacade {
         let that = this;
         return new Promise(function (fulfill, reject) {
             if (!isValid(query)) {
-                reject(
-                    {
-                        code: 400,
-                        body: {}
-                    });
-                //return;
+                reject({code: 400,body: {}});
             } else {
-                //let j_query = JSON.stringify(query);
-                //let j_obj = JSON.parse(j_query);
                 let where = query["WHERE"];
                 let options = query["OPTIONS"];
                 console.log(where)
                 let columns = options["COLUMNS"];
-                //var order = options["ORDER"];
-
 
                 let data: any = datasets["courses"];
                 if (data.length === 0) {
@@ -283,18 +238,31 @@ export default class InsightFacade implements IInsightFacade {
                     result2.push(c);
                 }
 
-                //console.log("this is the result" + result2);
-                fulfill({
-                    code: 200,
-                    body: {result: result2}
-                });
+                fulfill({code: 200,body: {result: result2}});
             }
         });
     }
 }
 
+function save(id: string, processedDataset: any) {
+    let that = this;
+    var dir = './data';
+
+    if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
+        fs.mkdirSync(dir);
+    }
+
+    fs.writeFile("'./data/" + id + '.json', JSON.stringify(processedDataset), function (err: any) {
+        if (err) {
+            Log.trace("Error writing file");
+        }
+        Log.trace('successfully saved to /data');
+    });
+
+    datasets[id] = that.getDatasets();
+}
+
 function isValid(query: any): boolean {
-    //let ret_obj: InsightResponse = {code: 200, body: "valid"};
     let where: any = null;
     if (!("WHERE" in query))
         return false;
@@ -354,6 +322,9 @@ function check_where(where: any): boolean {
     let top = Object.keys(where)[0];
     switch (top) {
         case "AND": {
+            if(where[top].length === 0){
+                return false;
+            }
             let filters = where[top];
             for (let i = 0; i < filters.length; i++) {
                 if (!check_where(filters[i]))
@@ -363,6 +334,9 @@ function check_where(where: any): boolean {
         }
 
         case "OR": {
+            if(where[top].length === 0){
+                return false;
+            }
             let filters = where[top];
             for (let i = 0; i < filters.length; i++) {
                 if (!check_where(filters[i]))
