@@ -8,7 +8,6 @@ import Log from "../Util";
 // my import
 let fs = require('fs');
 let JSZip = require('jszip');
-var request = require('request');
 import {isUndefined} from "util";
 import {isNumber} from "util";
 import {isString} from "util";
@@ -36,7 +35,6 @@ export default class InsightFacade implements IInsightFacade {
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        //this.datasetController = new DatasetController();
     }
 
     /**
@@ -52,7 +50,7 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
                 that.process(id, content).then(function (result: any) {
-                        if (result) {
+                        if (idExists && result) {
                             //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
                             fulfill({code: 204, body: {success: result}});
                         } else {
@@ -75,88 +73,59 @@ export default class InsightFacade implements IInsightFacade {
     }*/
 
     private process(id: string, data: any): Promise<boolean> {
-        let processedDataset: any = {};
-        var dictionary: { [course: string]: {} } = {};
-        let coursePromises: any = [];
-
+        Log.trace('DatasetController::process( ' + id + '... )');
+        let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                let loadedZip = new JSZip();
-                loadedZip.loadAsync(data, {base64: true})
-                    .then(function (zip: JSZip) {
-                        var alreadyExisted: boolean = false;
-                        if (datasets && datasets.hasOwnProperty(id)) {
-                            alreadyExisted = true;
-                        }
-                        if (id === "courses") {
-                            zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
-                                if (!file.dir) { // (file.dir == false) access the file in the directory
-                                    var promise = file.async('string').then(function (data) { // for each file in "courses"
-                                        var coursedata = JSON.parse(data); // file data type: JSON object
-                                        var coursename = file.name.substring(8);
-                                        var processedCourseData: any = [];
-                                        if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
-                                            for (var i = 0; i < coursedata.result.length; i++) {
-                                                var processed_course_data = {
-                                                    dept: coursedata.result[i].Subject,
-                                                    id: coursedata.result[i].Course,
-                                                    avg: coursedata.result[i].Avg,
-                                                    instructor: coursedata.result[i].Professor,
-                                                    title: coursedata.result[i].Title,
-                                                    pass: coursedata.result[i].Pass,
-                                                    fail: coursedata.result[i].Fail,
-                                                    audit: coursedata.result[i].Audit,
-                                                    uuid: coursedata.result[i]["id"].toString(),
-                                                };
-                                                processedCourseData.push(processed_course_data);
-                                            }
-                                            var final = {
-                                                result: processedCourseData
-                                            };
-                                            dictionary[coursename] = final;
-                                        }
-                                    });
-                                    coursePromises.push(promise);
+                let myZip = new JSZip();
+                var promises: any = [];
+                myZip.loadAsync(data, {base64: true}).then(function (zip: JSZip) {
+                    Log.trace('DatasetController::process(..) - unzipped');
+                    let that2=this;
+                    let arrayofrooms:any=[];
+                    let arrayofhrefs:any=[];
+                    let processedDataset: any = {};
+                    zip.folder("courses").forEach(function (relativePath, file) {
+                        var promise = file.async("string").then(function (processedfile) {
+                            let obj2 = JSON.parse(processedfile);
+                            let i = 0;
+                            for (i = 0; i < obj2.result.length; i++) {
+                                let c: any = {};
+                                if (!(typeof (obj2.result[0]) === 'undefined')) {
+                                    c[id + '_uuid'] = obj2.result[i].id;
+                                    c[id + '_id'] = obj2.result[i].Course;
+                                    c[id + '_dept'] = obj2.result[i].Subject;
+                                    c[id + '_title'] = obj2.result[i].Title;
+                                    c[id + '_avg'] = obj2.result[i].Avg;
+                                    c[id + '_instructor'] = obj2.result[i].Professor;
+                                    c[id + '_pass'] = obj2.result[i].Pass;
+                                    c[id + '_fail'] = obj2.result[i].Fail;
+                                    c[id + '_audit'] = obj2.result[i].Audit;
+                                    c[id + '_year'] = obj2.result[i].Section;
+                                    processedDataset.add(c);
                                 }
-                            });
+                            }
+                        }, function (error) {
+                            reject(error);
+                        });
+                        promises.push(promise);
+                    });
+                    Promise.all(promises).catch(function (err) {
+                        reject(false);
+                    }).then(function () {
+                        if (processedDataset.data.length == 0) {
+                            reject(false);
                         }
-                        if (id === "courses") {
-                            Promise.all(coursePromises).then(function () {
-                                fulfill(alreadyExisted ? 201 : 204);
-                                if (!alreadyExisted) {
-                                    processedDataset = dictionary;
-                                    let allCourses = Object.keys(processedDataset);
-                                    let mydataset: any = [];
-                                    for (let i = 0; i < allCourses.length; i++) {
-                                        let eachCourse = allCourses[i];
-                                        let courses = processedDataset[eachCourse]['result'];
-                                        for (let j = 0; j < courses.length; j++) {
-                                            let course = courses[j];
-                                            let c: any = {};
-                                            c["courses_dept"] = course["dept"];
-                                            c["courses_id"] = course["id"];
-                                            c["courses_avg"] = course["avg"];
-                                            c["courses_instructor"] = course["instructor"];
-                                            c["courses_title"] = course["title"];
-                                            c["courses_pass"] = course["pass"];
-                                            c["courses_fail"] = course["fail"];
-                                            c["courses_audit"] = course["audit"];
-                                            c["courses_uuid"] = course["uuid"];
-                                            mydataset.push(c);
-                                        }
-                                    }
-                                    datasets[id] = mydataset;
-                                    save(id, processedDataset);
-                                }
-                            })
-                        }
-                    }).catch(function (err: any) {
-                        Log.trace('DatasetController.process method error: can not zip the file.');
-                        reject(err);
+                        save(id, processedDataset);
+                        fulfill(true);
+                    });
+                }).catch(function (err:any) {
+                    Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
+                    reject(false);
                 });
             } catch (err) {
-                Log.trace('DatasetController.process method error.');
-                reject(err);
+                Log.trace('DatasetController::process(..) - ERROR: ' + err);
+                reject(false);
             }
         });
     }
@@ -176,11 +145,9 @@ export default class InsightFacade implements IInsightFacade {
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
                 delete datasets[id];
-                fulfill({code: 204, body: 'the operation was successful.'});
-                return;
+                fulfill({code: 204, body: {success: "the operation was successful."}})
             } else {
-                reject({code: 404,body: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'});
-                return;
+                reject({code: 404, body: {err: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'}});
             }
         });
     }
@@ -205,7 +172,6 @@ export default class InsightFacade implements IInsightFacade {
      *
      * */
     performQuery(query: any): Promise<InsightResponse> {
-        let that = this;
         return new Promise(function (fulfill, reject) {
             if (!isValid(query)) {
                 reject({code: 400,body: {}});
