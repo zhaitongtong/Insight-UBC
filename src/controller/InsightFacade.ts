@@ -73,10 +73,7 @@ export default class InsightFacade implements IInsightFacade {
     }*/
 
     private process(id: string, data: any): Promise<boolean> {
-        Log.trace('DatasetController::process( ' + id + '... )');
-        let that = this;
         return new Promise(function (fulfill, reject) {
-            let that = this;
             var dictionary: { [course: string]:{} } = {};
 
             try {
@@ -84,21 +81,18 @@ export default class InsightFacade implements IInsightFacade {
                 let promises:any = [];
 
                 myZip.loadAsync(data, {base64: true}).then(function (zip: JSZip) {
-                    Log.trace('DatasetController::process(..) - unzipped');
-                    let arrayofhrefs:any=[];
                     let processedDataset: any = {}
-
+                    /*
                     var alreadyExisted: boolean = false;
                     if(datasets && datasets.hasOwnProperty(id)) {
                         alreadyExisted = true;
-                    }
+                    }*/
 
                     if(id==="courses"){
                         zip.forEach(function (relativePath, file: JSZipObject) {
                             if (!file.dir){
                                 var promise = file.async("string").then(function (data) {
                                     let coursedata = JSON.parse(data);
-                                    var processedCourseData: any = {};
                                     for (var i = 0; i < coursedata.result.length; i++) {
                                         let c : any = {};
                                         if (!(typeof (coursedata.result[0]) === 'undefined')) {

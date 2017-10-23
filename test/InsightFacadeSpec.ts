@@ -2,8 +2,6 @@ import Log from "../src/Util";
 import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-//import {QueryResponce} from "../src/controller/QueryController";
-//import {QueryRequest} from "../src/controller/QueryController";
 
 describe("InsightFacade", function () {
     this.timeout(5000);
@@ -20,11 +18,6 @@ describe("InsightFacade", function () {
     before(function () {
         Log.info('InsightController::before() - start');
         zipFileContents = new Buffer(fs.readFileSync('./data/courses.zip')).toString('base64');
-        /*try {
-            fs.unlinkSync('./id.json');
-        } catch (err) {
-            Log.warn('InsightController::before() - id.json not removed (probably not present)');
-        }*/
         Log.info('InsightController::before() - done');
     });
 
