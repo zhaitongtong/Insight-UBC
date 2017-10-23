@@ -50,7 +50,7 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
                 that.process(id, content).then(function (result: any) {
-                        if (idExists && result) {
+                        if (!idExists) {
                             //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
                             fulfill({code: 204, body: {success: result}});
                         } else {
@@ -58,10 +58,10 @@ export default class InsightFacade implements IInsightFacade {
                             fulfill({code: 201, body: {success: result}});
                         }
                     }).catch(function (err: Error) {
-                    reject({code: 400, body: {err: err.message}});
+                    reject({code: 400, error: {err: err.message}});
                 })
             } catch (err) {
-                reject({code: 400, body: {err: err.message}});
+                reject({code: 400, error: {err: err.message}});
             }
         });
     };
@@ -82,12 +82,6 @@ export default class InsightFacade implements IInsightFacade {
 
                 myZip.loadAsync(data, {base64: true}).then(function (zip: JSZip) {
                     let processedDataset: any = {}
-                    /*
-                    var alreadyExisted: boolean = false;
-                    if(datasets && datasets.hasOwnProperty(id)) {
-                        alreadyExisted = true;
-                    }*/
-
                     if(id==="courses"){
                         zip.forEach(function (relativePath, file: JSZipObject) {
                             if (!file.dir){
@@ -158,7 +152,7 @@ export default class InsightFacade implements IInsightFacade {
                 delete datasets[id];
                 fulfill({code: 204, body: {success: "the operation was successful."}})
             } else {
-                reject({code: 404, body: {err: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'}});
+                reject({code: 404, error: {err: 'the operation was unsuccessful because the delete was  for a resource that was not previously added.'}});
             }
         });
     }
@@ -185,7 +179,7 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: any): Promise<InsightResponse> {
         return new Promise(function (fulfill, reject) {
             if (!isValid(query)) {
-                reject({code: 400,body: {}});
+                reject({code: 400,error: {}});
             } else {
                 let where = query["WHERE"];
                 let options = query["OPTIONS"];
@@ -194,7 +188,7 @@ export default class InsightFacade implements IInsightFacade {
 
                 let data: any = datasets["courses"];
                 if (data.length === 0) {
-                    reject({code: 424, body: {"error": "missing dataset"}});
+                    reject({code: 424, error: {"error": "missing dataset"}});
                     return;
                 }
 
