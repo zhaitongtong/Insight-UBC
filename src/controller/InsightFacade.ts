@@ -4,6 +4,7 @@
 
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
+
 let fs = require('fs');
 let JSZip = require('jszip');
 
@@ -58,7 +59,7 @@ export default class InsightFacade implements IInsightFacade {
                 let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
                 //console.log("idExist is "+idExists);
                 that.process(id, content)
-                    .then(function (result:any) {
+                    .then(function (result: any) {
                         if (!idExists) {
                             fulfill({code: 204, body: 'the operation was successful and the id already existed'});
                         } else {
@@ -81,85 +82,85 @@ export default class InsightFacade implements IInsightFacade {
 
     private process(id: string, data: any): Promise<boolean> {
         let that = this;
-        let processedDataset : any = {};
-        var dictionary: { [course: string]:{} } = {};
-        let coursePromises:any = [];
+        let processedDataset: any = {};
+        var dictionary: { [course: string]: {} } = {};
+        let coursePromises: any = [];
 
         return new Promise(function (fulfill, reject) {
             try {
                 let loadedZip = new JSZip();
                 loadedZip.loadAsync(data, {base64: true})
                     .then(function (zip: JSZip) {
-                    var alreadyExisted: boolean = false;
-                    if(datasets && datasets.hasOwnProperty(id)) {
-                        alreadyExisted = true;
-                    }
-                    if (id === "courses") {
-                        zip.forEach(function(relativePath: string, file: JSZipObject) { // get each file in the zip
-                            if (!file.dir){ // (file.dir == false) access the file in the directory
-                                var promise = file.async('string').then(function (data) { // for each file in "courses"
-                                    var coursedata = JSON.parse(data); // file data type: JSON object
-                                    var coursename = file.name.substring(8);
-                                    // Log.trace("Course Name: " + coursename);
-                                    var processedCourseData: any = [];
-                                    if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
-                                        for (var i = 0; i < coursedata.result.length; i++) {
-                                            var processed_course_data = {
-                                                dept: coursedata.result[i].Subject,
-                                                id: coursedata.result[i].Course,
-                                                avg: coursedata.result[i].Avg,
-                                                instructor: coursedata.result[i].Professor,
-                                                title: coursedata.result[i].Title,
-                                                pass: coursedata.result[i].Pass,
-                                                fail: coursedata.result[i].Fail,
-                                                audit: coursedata.result[i].Audit,
-                                                uuid: coursedata.result[i]["id"].toString(),
+                        var alreadyExisted: boolean = false;
+                        if (datasets && datasets.hasOwnProperty(id)) {
+                            alreadyExisted = true;
+                        }
+                        if (id === "courses") {
+                            zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
+                                if (!file.dir) { // (file.dir == false) access the file in the directory
+                                    var promise = file.async('string').then(function (data) { // for each file in "courses"
+                                        var coursedata = JSON.parse(data); // file data type: JSON object
+                                        var coursename = file.name.substring(8);
+                                        // Log.trace("Course Name: " + coursename);
+                                        var processedCourseData: any = [];
+                                        if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
+                                            for (var i = 0; i < coursedata.result.length; i++) {
+                                                var processed_course_data = {
+                                                    dept: coursedata.result[i].Subject,
+                                                    id: coursedata.result[i].Course,
+                                                    avg: coursedata.result[i].Avg,
+                                                    instructor: coursedata.result[i].Professor,
+                                                    title: coursedata.result[i].Title,
+                                                    pass: coursedata.result[i].Pass,
+                                                    fail: coursedata.result[i].Fail,
+                                                    audit: coursedata.result[i].Audit,
+                                                    uuid: coursedata.result[i]["id"].toString(),
+                                                };
+                                                processedCourseData.push(processed_course_data);
+                                            }
+                                            var final = {
+                                                result: processedCourseData
                                             };
-                                            processedCourseData.push(processed_course_data);
+                                            dictionary[coursename] = final; //save coursedata to dict[coursename]
                                         }
-                                        var final = {
-                                            result: processedCourseData
-                                        };
-                                        dictionary[coursename] = final; //save coursedata to dict[coursename]
-                                    }
-                                });
-                                coursePromises.push(promise);
-                            }
-                        });
-                    }
-                    if (id === "courses") {
-                        Promise.all(coursePromises).then(function () {
-                            fulfill(alreadyExisted?201:204);  // all promises are resolved
-                            if (!alreadyExisted) {
-                                processedDataset = dictionary;
-                                let allCourses = Object.keys(processedDataset);
-                                let mydataset: any = [];
-                                for (let i = 0; i < allCourses.length; i++) {
-                                    let eachCourse = allCourses[i]; // AANB504
-                                    let courses = processedDataset[eachCourse]['result'];
-                                    for (let j = 0; j < courses.length; j++) {
-                                        let course = courses[j];
-                                        let c: any= {};
-                                        c["courses_dept"] = course["dept"];
-                                        c["courses_id"] = course["id"];
-                                        c["courses_avg"] = course["avg"];
-                                        c["courses_instructor"] = course["instructor"];
-                                        c["courses_title"] = course["title"];
-                                        c["courses_pass"] = course["pass"];
-                                        c["courses_fail"] = course["fail"];
-                                        c["courses_audit"] = course["audit"];
-                                        c["courses_uuid"] = course["uuid"];
-
-                                        mydataset.push(c);
-                                    }
+                                    });
+                                    coursePromises.push(promise);
                                 }
-                                datasets[id] = mydataset;
-                                //that.save(id, processedDataset);
-                            }
-                        })
-                    }
+                            });
+                        }
+                        if (id === "courses") {
+                            Promise.all(coursePromises).then(function () {
+                                fulfill(alreadyExisted ? 201 : 204);  // all promises are resolved
+                                if (!alreadyExisted) {
+                                    processedDataset = dictionary;
+                                    let allCourses = Object.keys(processedDataset);
+                                    let mydataset: any = [];
+                                    for (let i = 0; i < allCourses.length; i++) {
+                                        let eachCourse = allCourses[i]; // AANB504
+                                        let courses = processedDataset[eachCourse]['result'];
+                                        for (let j = 0; j < courses.length; j++) {
+                                            let course = courses[j];
+                                            let c: any = {};
+                                            c["courses_dept"] = course["dept"];
+                                            c["courses_id"] = course["id"];
+                                            c["courses_avg"] = course["avg"];
+                                            c["courses_instructor"] = course["instructor"];
+                                            c["courses_title"] = course["title"];
+                                            c["courses_pass"] = course["pass"];
+                                            c["courses_fail"] = course["fail"];
+                                            c["courses_audit"] = course["audit"];
+                                            c["courses_uuid"] = course["uuid"];
 
-                }).catch(function (err:any) {
+                                            mydataset.push(c);
+                                        }
+                                    }
+                                    datasets[id] = mydataset;
+                                    //that.save(id, processedDataset);
+                                }
+                            })
+                        }
+
+                    }).catch(function (err: any) {
                     Log.trace('DatasetController.process method error: can not zip the file.');
                     reject(err);
                 });
@@ -176,11 +177,11 @@ export default class InsightFacade implements IInsightFacade {
         var dir = './data';
 
         let fs = require('fs');
-        if (!fs.existsSync(dir)){ //if ./data directory doesn't already exist, create
+        if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
             fs.mkdirSync(dir);
         }
 
-        fs.writeFile("'./data/" +id+ '.json', JSON.stringify(processedDataset), function (err:any) {
+        fs.writeFile("'./data/" + id + '.json', JSON.stringify(processedDataset), function (err: any) {
             if (err) {
                 Log.trace("Error writing file");
             }
