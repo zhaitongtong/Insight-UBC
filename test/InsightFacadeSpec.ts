@@ -385,6 +385,82 @@ describe("InsightFacade", function () {
         });
     })
 
+    it("AND can not be empty", function () {
+        let myQ = {
+            "WHERE":{
+                "OR":[
+                    {
+                        "AND":[
+                            {
+                            },
+                            {
+                            }
+                        ]
+                    },
+                    {
+                        "EQ":{
+                            "courses_avg":95
+                        }
+                    }
+                ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 56
+            console.log(result);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
 
+    });
+
+    it("OR can not be empty", function () {
+        let myQ = {
+            "WHERE":{
+                "OR":[
+                    {
+                        "OR":[
+                            {
+                            },
+                            {
+                            }
+                        ]
+                    },
+                    {
+                        "EQ":{
+                            "courses_avg":95
+                        }
+                    }
+                ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            let result: any = response.body;
+            console.log(result.length); // 56
+            console.log(result);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+
+    });
 
 });
