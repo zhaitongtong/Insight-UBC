@@ -6,10 +6,8 @@ import {InsightResponse} from "../src/controller/IInsightFacade";
 describe("InsightFacade", function () {
     this.timeout(5000);
 
-    var zipFileContents: string = null;
-    var facade: InsightFacade = null;
-
-    var zipFileContents : string = null;
+    var zipFileContentsCourse : string = null;
+    var zipFileContentsRoom : string = null;
     var facade: InsightFacade = null;
 
     let fs = require('fs');
@@ -17,7 +15,8 @@ describe("InsightFacade", function () {
 
     before(function () {
         Log.info('InsightController::before() - start');
-        zipFileContents = new Buffer(fs.readFileSync('./data/courses.zip')).toString('base64');
+        zipFileContentsCourse = new Buffer(fs.readFileSync('./data/courses.zip')).toString('base64');
+        zipFileContentsRoom = new Buffer(fs.readFileSync('./data/rooms.zip')).toString('base64');
         Log.info('InsightController::before() - done');
     });
 
@@ -28,23 +27,47 @@ describe("InsightFacade", function () {
     //Test for addDataset
 
     it("Should be able to add a new courses dataset (204)", function () {
-        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+        return facade.addDataset('courses', zipFileContentsCourse).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
     });
 
-    it("Should be able to update an existing dataset (201)", function () {
-        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+    it("Should be able to add a new rooms dataset (204)", function () {
+        return facade.addDataset('rooms', zipFileContentsRoom).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Should be able to update an existing course dataset (201)", function () {
+        return facade.addDataset('courses', zipFileContentsCourse).then(function (response: InsightResponse) {
             expect(response.code).to.equal(201);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
     });
 
-    it("Should not be able to add an invalid dataset (400)", function () {
+    it("Should be able to update an existing room dataset (201)", function () {
+        return facade.addDataset('rooms', zipFileContentsRoom).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(201);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Should not be able to add an invalid course dataset (400)", function () {
         return facade.addDataset('courses', 'some random bytes').then(function (response: InsightResponse) {
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to add an invalid room dataset (400)", function () {
+        return facade.addDataset('rooms', 'some random bytes').then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
@@ -61,8 +84,24 @@ describe("InsightFacade", function () {
         });
     })
 
+    it("Should able to remove a dataset (204)", function(){
+        return facade.removeDataset('rooms').then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    })
+
     it("Should not able to remove a dataset (404)", function(){
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
+            expect.fail;
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(404);
+        });
+    })
+
+    it("Should not able to remove a dataset (404)", function(){
+        return facade.removeDataset('rooms').then(function (response: InsightResponse) {
             expect.fail;
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(404);
@@ -72,14 +111,22 @@ describe("InsightFacade", function () {
     //Test for perform Q
 
     it("Should be able to add a new courses dataset (201 or 204)", function () {
-        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+        return facade.addDataset('courses', zipFileContentsCourse).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
     });
 
-    it("Simple query", function () {
+    it("Should be able to add a new courses dataset (201 or 204)", function () {
+        return facade.addDataset('rooms', zipFileContentsCourse).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Simple query of courses", function () {
         let myQ = {
             "WHERE":{
                 "GT":{
@@ -103,6 +150,47 @@ describe("InsightFacade", function () {
             expect.fail('Should not happen');
         });
 
+    });
+
+    it("Simple query of rooms", function () {
+        let myQ = {
+            "WHERE": {
+                "IS": {
+                    "rooms_name": "DMP_*"
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_name"
+                ],
+                "ORDER": "rooms_name"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Simple query2 of rooms", function () {
+        let myQ = {
+            "WHERE": {
+                "IS": {
+                    "rooms_address": "*Agrono*"
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_address", "rooms_name"
+                ]
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
     });
 
     it("Complex query", function () {
@@ -332,7 +420,6 @@ describe("InsightFacade", function () {
     });
 
     it("Should not be able to query when the logic comparison fails.", function (done) {
-        //
         // this.timeout(100000);
         let query: any = {
             "WHERE": {"AND": [{"GT": {"courss_avg": "90"}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
