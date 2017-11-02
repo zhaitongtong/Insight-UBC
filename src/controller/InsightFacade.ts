@@ -315,7 +315,7 @@ export default class InsightFacade implements IInsightFacade {
                                             var urlAddress :any = encodeURI(tempAddress);
                                             var restify = require('restify');
                                             var client = restify.createJsonClient({
-                                                url: 'http://skaha.cs.ubc.ca:8022/api/v1/team42/'+urlAddress,
+                                                url: 'http://skaha.cs.ubc.ca:11316/api/v1/team7/'+urlAddress,
                                                 version: '*'
                                             });
 
@@ -420,11 +420,9 @@ export default class InsightFacade implements IInsightFacade {
     private getDataset(id: string): any {
         /*
         var inDisk : boolean = fs.existsSync('./data/' + id +'.json');
-
         if (!inDisk) {
             return null;
         }
-
         if (this.datasets[id] === undefined || this.datasets[id] === {}) {
             var data = fs.readFileSync("./data/"+id+".json", "utf8");
             this.datasets[id] = JSON.parse(data);
@@ -441,7 +439,6 @@ export default class InsightFacade implements IInsightFacade {
                 this.datasets["courses"] = JSON.parse(fs.readFileSync("./data/courses.json", "utf8"));
             }
         }
-
         var rooms :any = this.datasets["rooms"];
         if (rooms === undefined) {
             if (fs.existsSync("./data/rooms.json")) {

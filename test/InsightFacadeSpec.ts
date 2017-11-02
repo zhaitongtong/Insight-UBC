@@ -3,15 +3,15 @@ import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
 
+// my import
+import fs = require('fs');
+
 describe("InsightFacade", function () {
     this.timeout(5000);
 
     var zipFileContentsCourse : string = null;
     var zipFileContentsRoom : string = null;
     var facade: InsightFacade = null;
-
-    let fs = require('fs');
-    console.log("Mytest begins")
 
     before(function () {
         Log.info('InsightController::before() - start');
