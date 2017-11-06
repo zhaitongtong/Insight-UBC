@@ -430,8 +430,11 @@ export default class InsightFacade implements IInsightFacade {
                 reject({code: 400,body: {}});
                 return;
             }
-            if (query['OPTIONS']['COLUMNS'][0].charAt(0) === 'c')
+            let isCourseQuery: boolean = false;
+            if (query['OPTIONS']['COLUMNS'][0].charAt(0) === 'c') {
                 data = datasets["courses"];
+                isCourseQuery = true;
+            }
             else
                 data = datasets["rooms"];
             if (isUndefined(data)) {
@@ -439,7 +442,7 @@ export default class InsightFacade implements IInsightFacade {
                 return;
             }
 
-            if (!isValid(query)) {
+            if (!isValid(query, isCourseQuery)) {
                 console.log('query is not valid');
                 reject({code: 400,body: {}});
                 return;
@@ -480,7 +483,7 @@ export default class InsightFacade implements IInsightFacade {
     Log.trace("File saved");
 }*/
 
-function isValid(query: any): boolean {
+function isValid(query: any, isCourseQuery: boolean): boolean {
     let where: any = null;
     if (!("WHERE" in query))
         return false;
@@ -502,9 +505,13 @@ function isValid(query: any): boolean {
 
     for (let column of columns) {
         let value = dictionary[column];
-        if ((column.substring(0, column.indexOf("_")) != "courses" && column.substring(0, column.indexOf("_")) != "rooms") || isUndefined(value)) {
+        if ((column.substring(0, column.indexOf("_")) !== "courses" && column.substring(0, column.indexOf("_")) !== "rooms") || isUndefined(value)) {
             return false;
         }
+        if (column.substring(0, column.indexOf("_")) === "courses" && !isCourseQuery)
+            return false;
+        if (column.substring(0, column.indexOf("_")) === "rooms" && isCourseQuery)
+            return false;
     }
 
     if (!check_order(order, columns)) {
