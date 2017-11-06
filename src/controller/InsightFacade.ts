@@ -126,8 +126,12 @@ export default class InsightFacade implements IInsightFacade {
                         if (datasets && datasets.hasOwnProperty(id)) {
                             alreadyExisted = true;
                         }
-                        if (id === "courses") {
+                        //if (id === "courses") {
                             zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
+                                if (file === "campus/") {
+                                    reject(400);
+                                    return;
+                                }
                                 if (!file.dir) { // (file.dir == false) access the file in the directory
                                     var promise = file.async('string').then(function (data) { // for each file in "courses"
                                         var coursedata = JSON.parse(data); // file data type: JSON object
@@ -165,8 +169,8 @@ export default class InsightFacade implements IInsightFacade {
                                     coursePromises.push(promise);
                                 }
                             });
-                        }
-                        if (id === "courses") {
+                        //}
+                        //if (id === "courses") {
                             Promise.all(coursePromises).then(function () {
                                 //fulfill(alreadyExisted ? 201 : 204);
                                 processedDataset = dictionary;
@@ -201,7 +205,7 @@ export default class InsightFacade implements IInsightFacade {
                                     fulfill(201);
                                 }
                             })
-                        }
+                        //}
                     }).catch(function (err: any) {
                         Log.trace('DatasetController.process method error: can not zip the file.');
                         reject(err);
@@ -231,6 +235,11 @@ export default class InsightFacade implements IInsightFacade {
                         let promises: any[] = [];
                         for (let file in body.files) {
                             // if it is a folder, continue
+                            if (file === "course/") {
+                                reject(400);
+                                return;
+                            }
+
                             if (file.charAt(file.length-1) === '/' || file.substring(file.length-9) === '.DS_Store') {
                                 continue;
                             }
