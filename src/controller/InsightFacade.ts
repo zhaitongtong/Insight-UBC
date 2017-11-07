@@ -1,7 +1,3 @@
-/**
- * This is the main programmatic entry point for the project.
- */
-
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
 
@@ -74,14 +70,11 @@ export default class InsightFacade implements IInsightFacade {
                 try {
                     that.processRoomZip(id, content).then(function (result: any) {
                         if (result === 204) {
-                            //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
                             fulfill({code: 204, body: {success: result}});
                         } else {
-                            //fulfill({code: 201, body: 'the operation was successful and the id already existed'})
                             fulfill({code: 201, body: {success: result}});
                         }
                     }).catch(function () {
-                        // fix the err to error
                         reject({code: 400, body: {error: 400}});
                     })
                 } catch (err) {
@@ -91,19 +84,15 @@ export default class InsightFacade implements IInsightFacade {
                 try {
                     that.process(id, content).then(function (result: any) {
                         if (result === 204) {
-                            //fulfill({code: 204, body: 'the operation was successful and the id already existed'});
                             fulfill({code: 204, body: {success: result}});
                         } else {
-                            //fulfill({code: 201, body: 'the operation was successful and the id already existed'})
                             fulfill({code: 201, body: {success: result}});
                             return;
                         }
                     }).catch(function () {
-                        // fix the err to error
                         reject({code: 400, body: {error: "WTF"}});
                     })
                 } catch (err) {
-                    // fix the err to error
                     reject({code: 400, body: {error:"WTF"}});
                 }
             } else {
@@ -127,88 +116,77 @@ export default class InsightFacade implements IInsightFacade {
                             alreadyExisted = true;
                         }
                         //if (id === "courses") {
-                            zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
-                                if (file === "campus/") {
-                                    reject(400);
-                                    return;
-                                }
-                                if (!file.dir) { // (file.dir == false) access the file in the directory
-                                    var promise = file.async('string').then(function (data) { // for each file in "courses"
-                                        var coursedata = JSON.parse(data); // file data type: JSON object
-                                        //var coursename = file.name.substring(8);
-                                        var coursename = file.name;
-                                        var processedCourseData: any = [];
-                                        if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
-                                            for (var i = 0; i < coursedata.result.length; i++) {
-                                                if (i<1) {
-                                                    //console.log(coursedata.result[i]);
-                                                }
-                                                let year = 1900;
-                                                if (coursedata.result[i].Section !== "overall")
-                                                    year = Number(coursedata.result[i].Year);
-                                                var processed_course_data = {
-                                                    courses_dept: coursedata.result[i].Subject,
-                                                    courses_id: coursedata.result[i].Course,
-                                                    courses_avg: coursedata.result[i].Avg,
-                                                    courses_instructor: coursedata.result[i].Professor,
-                                                    courses_title: coursedata.result[i].Title,
-                                                    courses_pass: coursedata.result[i].Pass,
-                                                    courses_fail: coursedata.result[i].Fail,
-                                                    courses_audit: coursedata.result[i].Audit,
-                                                    courses_uuid: coursedata.result[i]["id"].toString(),
-                                                    courses_year: year
-                                                };
-                                                processedCourseData.push(processed_course_data);
+                        zip.forEach(function (relativePath: string, file: JSZipObject) { // get each file in the zip
+                            if (relativePath === "campus/") {
+                                reject(400);
+                                return;
+                            }
+                            if (!file.dir) { // (file.dir == false) access the file in the directory
+                                var promise = file.async('string').then(function (data) { // for each file in "courses"
+                                    var coursedata = JSON.parse(data); // file data type: JSON object
+                                    var coursename = file.name;
+                                    var processedCourseData: any = [];
+                                    if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
+                                        for (var i = 0; i < coursedata.result.length; i++) {
+                                            if (i<1) {
+                                                //console.log(coursedata.result[i]);
                                             }
-                                            var final = {
-                                                result: processedCourseData
+                                            let year = 1900;
+                                            if (coursedata.result[i].Section !== "overall")
+                                                year = Number(coursedata.result[i].Year);
+                                            var processed_course_data = {
+                                                courses_dept: coursedata.result[i].Subject,
+                                                courses_id: coursedata.result[i].Course,
+                                                courses_avg: coursedata.result[i].Avg,
+                                                courses_instructor: coursedata.result[i].Professor,
+                                                courses_title: coursedata.result[i].Title,
+                                                courses_pass: coursedata.result[i].Pass,
+                                                courses_fail: coursedata.result[i].Fail,
+                                                courses_audit: coursedata.result[i].Audit,
+                                                courses_uuid: coursedata.result[i]["id"].toString(),
+                                                courses_year: year
                                             };
-                                            dictionary[coursename] = final;
+                                            processedCourseData.push(processed_course_data);
                                         }
-                                    });
-                                    coursePromises.push(promise);
-                                }
-                            });
+                                        var final = {
+                                            result: processedCourseData
+                                        };
+                                        dictionary[coursename] = final;
+                                    }
+                                });
+                                coursePromises.push(promise);
+                            }
+                        });
                         //}
                         //if (id === "courses") {
-                            Promise.all(coursePromises).then(function () {
-                                //fulfill(alreadyExisted ? 201 : 204);
-                                processedDataset = dictionary;
-                                let allCourses = Object.keys(processedDataset);
-                                let mydataset: any = [];
-                                for (let i = 0; i < allCourses.length; i++) {
-                                    let eachCourse = allCourses[i];
-                                    let courses = processedDataset[eachCourse]['result'];
-                                    for (let j = 0; j < courses.length; j++) {
-                                        let course = courses[j];
-                                            /*let c: any = {};
-                                            c["courses_dept"] = course["dept"];
-                                            c["courses_id"] = course["id"];
-                                            c["courses_avg"] = course["avg"];
-                                            c["courses_instructor"] = course["instructor"];
-                                            c["courses_title"] = course["title"];
-                                            c["courses_pass"] = course["pass"];
-                                            c["courses_fail"] = course["fail"];
-                                            c["courses_audit"] = course["audit"];
-                                            c["courses_uuid"] = course["uuid"];*/
-                                        mydataset.push(course);
-                                    }
+                        Promise.all(coursePromises).then(function () {
+                            //fulfill(alreadyExisted ? 201 : 204);
+                            processedDataset = dictionary;
+                            let allCourses = Object.keys(processedDataset);
+                            let mydataset: any = [];
+                            for (let i = 0; i < allCourses.length; i++) {
+                                let eachCourse = allCourses[i];
+                                let courses = processedDataset[eachCourse]['result'];
+                                for (let j = 0; j < courses.length; j++) {
+                                    let course = courses[j];
+                                    mydataset.push(course);
                                 }
-                                if (mydataset.length === 0) {
-                                    reject('empty file');
-                                    return;
-                                }
-                                datasets[id] = mydataset;
-                                if (!alreadyExisted) {
-                                    fulfill(204);
-                                } else {
-                                    fulfill(201);
-                                }
-                            })
+                            }
+                            if (mydataset.length === 0) {
+                                reject(400);
+                                return;
+                            }
+                            datasets[id] = mydataset;
+                            if (!alreadyExisted) {
+                                fulfill(204);
+                            } else {
+                                fulfill(201);
+                            }
+                        })
                         //}
                     }).catch(function (err: any) {
-                        Log.trace('DatasetController.process method error: can not zip the file.');
-                        reject(err);
+                    Log.trace('DatasetController.process method error: can not zip the file.');
+                    reject(err);
                 });
             } catch (err) {
                 Log.trace('DatasetController.process method error.');
@@ -549,6 +527,7 @@ function check_order(order: any, columns: any): boolean {
     }
     return true;
 }
+
 
 function check_where(where: any): boolean {
     if (Object.keys(where).length !== 1)
