@@ -41,6 +41,15 @@ describe("InsightFacade", function () {
         });
     });
 
+    it("Should be able to add a new rooms dataset (204)", function () {
+        return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+            //console.log(response)
+        });
+    });
+
     it("Should be able to update an existing dataset (201)", function () {
         //facade.addDataset('courses', zipFileContents)
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
@@ -48,6 +57,15 @@ describe("InsightFacade", function () {
             log.trace(response)
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
+        });
+    });
+
+    it("Should be able to update an existing dataset (201)", function () {
+        return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(201);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+            //console.log(response)
         });
     });
 
@@ -73,6 +91,46 @@ describe("InsightFacade", function () {
 
     it("Should not able to remove a dataset (404)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(404);
+        });
+    });
+
+    //Test for perform Q
+
+    it("Should be able to add a new courses dataset (201 or 204)", function () {
+        return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    //****room
+
+    it("Should not be able to add an invalid dataset (400)for rooms", function () {
+        return facade.addDataset('rooms', 'some random bytes').then(function (response: InsightResponse) {
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+            console.log(response)
+        });
+    });
+
+    //Test for removeDataset
+
+    it("Should able to remove a dataset (204) for rooms", function () {
+        return facade.removeDataset('rooms').then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+            console.log(response.code)
+        }).catch(function (response: InsightResponse) {
+            expect.fail('Should not happen');
+        });
+    });
+
+    it("Should not able to remove a dataset (404) for rooms", function () {
+        return facade.removeDataset('rooms').then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(404);
@@ -427,7 +485,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            console.log(response.body);
+            //console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
@@ -449,7 +507,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            console.log(response.body);
+            //console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
