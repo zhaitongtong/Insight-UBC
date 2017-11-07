@@ -2,8 +2,6 @@ import Log from "../src/Util";
 import {expect} from 'chai';
 import InsightFacade from "../src/controller/InsightFacade";
 import {InsightResponse} from "../src/controller/IInsightFacade";
-//import {QueryResponce} from "../src/controller/QueryController";
-//import {QueryRequest} from "../src/controller/QueryController";
 
 describe("InsightFacade", function () {
     this.timeout(10000);
@@ -102,7 +100,7 @@ describe("InsightFacade", function () {
                 "COLUMNS":[
                     "courses_dept",
                     "courses_avg"
-                    ],
+                ],
                 "ORDER":"courses_avg"
             }
         };
@@ -223,7 +221,7 @@ describe("InsightFacade", function () {
 
     });
 
-   it("NOT All courses", function () {
+    it("NOT All courses", function () {
         let myQ = {
             "WHERE":{
                 "OR":[
@@ -260,7 +258,7 @@ describe("InsightFacade", function () {
         });
     });
 
-   it("Should be able to query a complex valid query", function () {
+    it("Should be able to query a complex valid query", function () {
         //this.timeout(100000);
         let query: any = {
             "WHERE":{"OR":[{"AND":[{"GT":{"courses_avg":90}},{"IS":{"courses_dept":"adhe"}}]},{"EQ":{"courses_avg":95}}]},
@@ -271,7 +269,7 @@ describe("InsightFacade", function () {
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
-   });
+    });
 
     it("Should not be able to query when COLUMNS is empty.", function (done) {
         //this.timeout(100000);
