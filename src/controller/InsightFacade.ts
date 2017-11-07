@@ -93,10 +93,10 @@ export default class InsightFacade implements IInsightFacade {
                         reject({code: 400, body: {error: "WTF"}});
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error: "WTF"}});
+                    reject({code: 400, body: {error:"WTF"}});
                 }
             } else {
-                reject({code: 400, body: {error: "wrong id"}});
+                reject({code: 400, body: {error:"wrong id"}});
             }
         });
     };
@@ -128,7 +128,7 @@ export default class InsightFacade implements IInsightFacade {
                                     var processedCourseData: any = [];
                                     if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
                                         for (var i = 0; i < coursedata.result.length; i++) {
-                                            if (i < 1) {
+                                            if (i<1) {
                                                 //console.log(coursedata.result[i]);
                                             }
                                             let year = 1900;
@@ -157,37 +157,40 @@ export default class InsightFacade implements IInsightFacade {
                                 coursePromises.push(promise);
                             }
                         });
-                        //}
-                        //if (id === "courses") {
                         Promise.all(coursePromises).then(function () {
-                            //fulfill(alreadyExisted ? 201 : 204);
-                            processedDataset = dictionary;
-                            let allCourses = Object.keys(processedDataset);
-                            let mydataset: any = [];
-                            for (let i = 0; i < allCourses.length; i++) {
-                                let eachCourse = allCourses[i];
-                                let courses = processedDataset[eachCourse]['result'];
-                                for (let j = 0; j < courses.length; j++) {
-                                    let course = courses[j];
-                                    mydataset.push(course);
+                            try{
+                                //fulfill(alreadyExisted ? 201 : 204);
+                                processedDataset = dictionary;
+                                let allCourses = Object.keys(processedDataset);
+                                let mydataset: any = [];
+                                for (let i = 0; i < allCourses.length; i++) {
+                                    let eachCourse = allCourses[i];
+                                    let courses = processedDataset[eachCourse]['result'];
+                                    for (let j = 0; j < courses.length; j++) {
+                                        let course = courses[j];
+                                        mydataset.push(course);
+                                    }
                                 }
-                            }
-                            if (mydataset.length === 0) {
+                                /*
+                                if (mydataset.length === 0) {
+                                    reject(400);
+                                    return;
+                                }*/
+                                datasets[id] = mydataset;
+                                if (!alreadyExisted) {
+                                    fulfill(204);
+                                } else {
+                                    fulfill(201);
+                                }
+                            } catch (err) {
                                 reject(400);
-                                return;
                             }
-                            datasets[id] = mydataset;
-                            if (!alreadyExisted) {
-                                fulfill(204);
-                            } else {
-                                fulfill(201);
-                            }
-                        })
-                        //}
-                    }).catch(function (err: any) {
-                    Log.trace('DatasetController.process method error: can not zip the file.');
-                    reject(err);
-                });
+                        });
+                    })
+                    .catch(function (err: any) {
+                        Log.trace('DatasetController.process method error: can not zip the file.');
+                        reject(err);
+                    });
             } catch (err) {
                 Log.trace('DatasetController.process method error.');
                 reject(err);
@@ -218,7 +221,7 @@ export default class InsightFacade implements IInsightFacade {
                                 return;
                             }
 
-                            if (file.charAt(file.length - 1) === '/' || file.substring(file.length - 9) === '.DS_Store') {
+                            if (file.charAt(file.length-1) === '/' || file.substring(file.length-9) === '.DS_Store') {
                                 continue;
                             }
                             let promise = body.files[file].async("string")
@@ -239,7 +242,7 @@ export default class InsightFacade implements IInsightFacade {
                                     let rooms: any[] = [];
                                     if (roomNode === null)
                                         return rooms;
-                                    let fileName = file.substring(file.lastIndexOf('/') + 1);
+                                    let fileName = file.substring(file.lastIndexOf('/')+1);
                                     if (fileName === 'LASR') { // hard code LASR now
                                         /*
                                          102	80	Classroom-Fixed Tables/Fixed Chairs	Tiered Large Group	More info
@@ -364,7 +367,6 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
-
     /**
      * Remove a dataset from UBCInsight.
      *
@@ -379,26 +381,11 @@ export default class InsightFacade implements IInsightFacade {
                 fulfill({code: 204, body: "the operation was successful."});
                 return;
             } else {
-                reject({
-                    code: 404,
-                    body: "the operation was unsuccessful because the delete was  for a resource that was not previously added."
-                });
+                reject({code: 404,body: "the operation was unsuccessful because the delete was  for a resource that was not previously added."});
                 return;
             }
         });
     }
-
-    /*private delete(id: string) {
-        let fs = require('fs');
-        var path = './data/' + id + '.json';
-        if (datasets[id]) {
-            delete datasets[id];
-            datasets[id] = null;
-        }
-        if (fs.statSync(path).isFile()) {
-            fs.unlink(path);
-        }
-    }*/
 
     /**
      * Perform a query on UBCInsight.
@@ -412,13 +399,13 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let data: any = null;
             if ((!('OPTIONS' in query)) || (!('COLUMNS' in query['OPTIONS']))) {
-                reject({code: 400, body: {}});
+                reject({code: 400,body: {}});
                 return;
             }
             let options = query["OPTIONS"];
             let columns: any[] = options["COLUMNS"];
             if ((columns.length === 0) || (columns[0].length === 0)) {
-                reject({code: 400, body: {}});
+                reject({code: 400,body: {}});
                 return;
             }
             let isCourseQuery: boolean = false;
@@ -435,7 +422,7 @@ export default class InsightFacade implements IInsightFacade {
 
             if (!isValid(query, isCourseQuery)) {
                 console.log('query is not valid');
-                reject({code: 400, body: {}});
+                reject({code: 400,body: {}});
                 return;
             } else {
                 let where = query["WHERE"];
@@ -457,22 +444,12 @@ export default class InsightFacade implements IInsightFacade {
                     result2.push(c);
                 }
 
-                fulfill({code: 200, body: {result: result2}});
+                fulfill({code: 200,body: {result: result2}});
                 return;
             }
         });
     }
 }
-
-/*function save(id: string, processedDataset: any) {
-    var dir = './data';
-    if (!fs.existsSync(dir)) { //if ./data directory doesn't already exist, create
-        fs.mkdirSync(dir);
-    }
-    let s = JSON.stringify(datasets[id]);
-    fs.writeFileSync("./data/" + id + ".json", s);
-    Log.trace("File saved");
-}*/
 
 function isValid(query: any, isCourseQuery: boolean): boolean {
     let where: any = null;
@@ -539,7 +516,7 @@ function check_where(where: any): boolean {
     let top = Object.keys(where)[0];
     switch (top) {
         case "AND": {
-            if (where[top].length === 0) {
+            if(where[top].length === 0){
                 return false;
             }
             let filters = where[top];
@@ -551,7 +528,7 @@ function check_where(where: any): boolean {
         }
 
         case "OR": {
-            if (where[top].length === 0) {
+            if(where[top].length === 0){
                 return false;
             }
             let filters = where[top];
@@ -744,7 +721,7 @@ function processRoom(node: any, fileName: string, rooms: any[]) {
     }
 }
 
-function searchTbody(node: any): any {
+function searchTbody(node: any) : any{
     if (node['nodeName'] === 'tbody')
         return node;
     if (!('childNodes' in node))
@@ -771,7 +748,7 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
                     res.on('data', (chunk: any) => {
                         rawData += chunk;
                     });
-                    res.on('end', function () {
+                    res.on('end', function() {
                         try {
                             const parsedData = JSON.parse(rawData);
                             fulfill(parsedData);
@@ -781,12 +758,12 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
                         }
 
                     });
-                }).on('error', function (err: any) {
+                }).on('error', function(err: any) {
                     throw('Err');
                 });
             }));
         }
-        Promise.all(pArr).then(function (result) {
+        Promise.all(pArr).then(function(result) {
             for (let index in Object.keys(buildings)) {
                 let key = Object.keys(buildings)[index];
                 let latLonObject: any = result[index];
