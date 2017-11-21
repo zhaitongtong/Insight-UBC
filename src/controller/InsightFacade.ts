@@ -90,10 +90,10 @@ export default class InsightFacade implements IInsightFacade {
                             return;
                         }
                     }).catch(function () {
-                        reject({code: 400, body: {error: "WTF"}});
+                        reject({code: 400, body: {error: "some error"}});
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error:"WTF"}});
+                    reject({code: 400, body: {error:"some error"}});
                 }
             } else {
                 reject({code: 400, body: {error:"wrong id"}});
@@ -220,7 +220,6 @@ export default class InsightFacade implements IInsightFacade {
                                 reject(400);
                                 return;
                             }
-
                             if (file.charAt(file.length-1) === '/' || file.substring(file.length-9) === '.DS_Store') {
                                 continue;
                             }
@@ -243,6 +242,9 @@ export default class InsightFacade implements IInsightFacade {
                                     if (roomNode === null)
                                         return rooms;
                                     let fileName = file.substring(file.lastIndexOf('/')+1);
+
+                                    // LASR ROOM TYPE IS EMPTY
+
                                     if (fileName === 'LASR') { // hard code LASR now
                                         /*
                                          102	80	Classroom-Fixed Tables/Fixed Chairs	Tiered Large Group	More info
@@ -470,6 +472,7 @@ function isValid(query: any, isCourseQuery: boolean): boolean {
 
     if (columns.length == 0)
         return false;
+    //modification for room
 
     for (let column of columns) {
         let value = dictionary[column];
@@ -516,9 +519,11 @@ function check_where(where: any): boolean {
     let top = Object.keys(where)[0];
     switch (top) {
         case "AND": {
+            // we add this one
             if(where[top].length === 0){
                 return false;
             }
+
             let filters = where[top];
             for (let i = 0; i < filters.length; i++) {
                 if (!check_where(filters[i]))
@@ -544,6 +549,8 @@ function check_where(where: any): boolean {
             let mValue = m[mKey];
             return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit' ||
                 mKey === 'rooms_lat' || mKey === 'rooms_lon' || mKey === 'rooms_seats' || mKey === 'courses_year');
+            //add course year here
+            // add room
 
         }
         case "GT": {
@@ -570,6 +577,7 @@ function check_where(where: any): boolean {
             return isString(sValue) && (sKey === 'courses_dept' || sKey === 'courses_id' || sKey === 'courses_instructor' || sKey === 'courses_title' || sKey === 'courses_uuid' ||
                 sKey === 'rooms_fullname' || sKey === 'rooms_shortname' || sKey === 'rooms_number' || sKey === 'rooms_name' || sKey === 'rooms_address' ||
                 sKey === 'rooms_type' || sKey === 'rooms_furniture' || sKey === 'rooms_href');
+            // add more cases for room
         }
 
         case "NOT": {
@@ -647,6 +655,9 @@ function courseIn(course: any, where: any): boolean {
     }
 }
 
+
+//two helper
+
 function processBuilding(node: any) {
     let skip: boolean = false;
     if (node['nodeName'] !== '#text' || node['value'].trim().length === 0)
@@ -721,6 +732,8 @@ function processRoom(node: any, fileName: string, rooms: any[]) {
     }
 }
 
+//a clase can occur more than once in HTML
+
 function searchTbody(node: any) : any{
     if (node['nodeName'] === 'tbody')
         return node;
@@ -736,6 +749,10 @@ function searchTbody(node: any) : any{
     }
     return null;
 }
+
+//Geocoding an address to a latitude/longitude pair is usually performed using online web services.
+//To avoid problems with our spamming different geolocation providers we will be providing a web service for you to use for this purpose.
+
 
 function getLatLon(urls: string[]): Promise<Array<any>> {
     return new Promise(function (fulfill, reject) {
