@@ -796,3 +796,329 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
         })
     });
 }
+
+function perform_Query_transform(query: any, this_obj: InsightFacade): Promise<InsightResponse> {
+    let j_query = JSON.stringify(query);
+    let j_obj = JSON.parse(j_query);
+
+    let where = j_obj["WHERE"];
+    let transformation = j_obj["TRANSFORMATIONS"];
+    let group = transformation["GROUP"];
+    let apply = transformation["APPLY"];
+    let options = j_obj["OPTIONS"];
+    let columns = options["COLUMNS"];
+    let order = options["ORDER"];
+    let form = options["FORM"];
+
+    let temp: string = group[0];
+    let id = temp.substring(0, temp.indexOf("_"));
+
+    let all_columns: string[];
+    if (id == "courses") {
+        all_columns = [
+            "courses_dept",
+            "courses_avg",
+            "courses_uuid",
+            "courses_title",
+            "courses_instructor",
+            "courses_fail",
+            "courses_audit",
+            "courses_pass",
+            "courses_year",
+            "courses_id",
+            "courses_size"
+        ];
+    }
+    else if (id == "rooms") {
+
+        all_columns = [
+            "rooms_fullname",
+            "rooms_shortname",
+            "rooms_name",
+            "rooms_number",
+            "rooms_address",
+            "rooms_lat",
+            "rooms_lon",
+            "rooms_seats",
+            "rooms_furniture",
+            "rooms_href",
+            "rooms_type"
+        ];
+    }
+
+
+    let helper_query = {
+        "WHERE": where,
+        "OPTIONS": {
+            "COLUMNS": all_columns
+            ,
+            "FORM": "TABLE"
+        }
+    };
+
+    return new Promise((fulfill, reject) => {
+        this_obj.performQuery(helper_query).then(function (response: InsightResponse) {
+            // get the groups
+
+            let j_response = JSON.parse(JSON.stringify(response.body));
+
+            let table = j_response["result"];
+
+            if (table.length < 1) {
+                return fulfill(response);
+            }
+            for (let tuple of table) {
+
+                let group_id_value: string = "";
+                for (let group_key of group) {
+                    group_id_value += tuple[group_key] + "_";
+                }
+                tuple["group_id"] = group_id_value;
+            }
+
+            table.sort((a: any, b: any) => {
+                return local_compare_single(a["group_id"], b["group_id"]);
+            });
+
+
+            let prev_group_name = table[0]["group_id"];
+            let groups: {[index: string]: any} = {};
+            groups[prev_group_name] = [];
+
+            for (let i = 0; i < table.length; i++) {
+                let group_name = table[i]["group_id"];
+                if (prev_group_name == group_name) {
+                    groups[prev_group_name].push(table[i]);
+                }
+                else {
+                    prev_group_name = group_name;
+                    groups[prev_group_name] = [];
+                    groups[prev_group_name].push(table[i]);
+                }
+            }
+
+            let group_keys = Object.keys(groups);
+
+            let final_groups = [];
+
+            for (let key of group_keys) {
+
+                let group = groups[key];
+                let result_list = [];
+                let final_group_obj: {[index: string]: any} = {};
+
+                final_group_obj["group_id"] = key;
+
+
+                for (let item of apply) {
+
+                    let item_key = Object.keys(item)[0];  //ie maxSeats
+                    let function_use = Object.keys(item[item_key])[0]; // "MAX"
+                    let function_target = item[item_key][function_use]; //"rooms_seats"
+
+                    let result;
+
+                    switch (function_use) {
+                        case "MAX":
+
+                            //groups[group_keys[0]]   [{...}, {...}, {...} ]  same as  groups[key]  = group
+                            // groups[group_keys[0]][0]    {....}   group[0]
+                            // group[group_keys[0]][0] [function_target]  group[0][function_target] a specific value
+
+                            if (typeof group[0][function_target] != "number") {
+                                throw Error("Invalid type 1440");
+                            }
+
+                            let max = group[0][function_target];
+
+                            for (let obj of group) {
+                                if (obj[function_target] > max) {
+                                    max = obj[function_target];
+                                }
+                            }
+
+                            result = max;
+                            break;
+                        case "MIN":
+
+                            if (typeof group[0][function_target] != "number") {
+                                throw Error("Invalid type 1440");
+                            }
+
+                            let min = group[0][function_target];
+
+                            for (let obj of group) {
+                                if (obj[function_target] < min) {
+                                    min = obj[function_target];
+                                }
+                            }
+                            result = min;
+                            break;
+                        case "AVG":
+                            let sum = 0;
+                            result = 0;
+                            if (typeof group[0][function_target] != "number") {
+                                throw Error("Invalid type 1440");
+                            }
+
+                            let counter = 0;
+
+                            for (let obj of group) {
+                                let temp = (obj[function_target] * 10);
+                                temp = Number(temp.toFixed(0));
+                                sum += temp;
+                                counter++;
+                            }
+
+                            result = sum / counter / 10;
+                            result = Number(result.toFixed(2));
+
+                            break;
+                        case"COUNT":
+
+                            result = 0;
+                            let temp = group;
+                            if (temp.length > 0) {
+
+                                temp.sort((a: any, b: any) => {
+                                    return local_compare_single(a[function_target], b[function_target]);
+                                });
+
+
+                                let prev_val = temp[0][function_target];
+                                result = 1;
+                                for (let obj of temp) {
+                                    if (obj[function_target] != prev_val) {
+                                        result++;
+                                        prev_val = obj[function_target];
+                                    }
+                                }
+
+                            }
+                            else {
+                                console.log("empty list 1501,count =0");
+                            }
+
+                            break;
+                        case"SUM":
+                            result = 0;
+                            if (typeof group[0][function_target] != "number") {
+                                throw Error("Invalid type 1440");
+                            }
+
+                            for (let obj of group) {
+                                result += obj[function_target];
+                            }
+
+                            break;
+                        default:
+                            throw Error("invalid function to use 1447");
+                    }
+
+                    result_list.push(result);
+                    final_group_obj[item_key] = result;
+
+                }
+
+
+                let temp_group = transformation["GROUP"];
+
+                for (let item of temp_group) {
+                    final_group_obj[item] = group[0][item];
+                }
+                final_groups.push(final_group_obj);
+
+            }
+
+
+            if (!isUndefined(order)) {
+
+                if (typeof order == "object") {
+                    let dir = order["dir"];
+                    let keys = order["keys"];
+
+                    if (dir == "UP") {
+                        final_groups.sort((a: any, b: any) => {
+                            return local_compare(a, b, keys);
+                        });
+
+                    }
+                    else if (dir == "DOWN") {
+
+                        final_groups.sort((a: any, b: any) => {
+                            return -1 * local_compare(a, b, keys);
+                        });
+
+                    }
+                    else {
+                        throw Error("invalid direction line 903");
+                    }
+                }
+                else {
+
+                    final_groups.sort((a: any, b: any) => {
+                        return local_compare_single(a[order], b[order]);
+                    });
+
+
+                }
+            }
+
+            let ret_list = [];
+            for (let group of final_groups) {
+                let ret_obj: {[index: string]: any} = {};
+
+                for (let column of columns) {
+                    ret_obj[column] = group[column];
+                }
+                ret_list.push(ret_obj);
+            }
+
+
+            let ret_obj = {render: form, result: ret_list};
+            fulfill({code: 200, body: ret_obj});
+        }).catch(function (err) {
+            reject({code: 400, body: {"error": "error in perform_query_transform 1647"}});
+        });
+
+    });
+
+
+}
+
+
+
+function check_missing(keys: any, missing_col: string []) {
+
+    for (var i = 0; i < keys.length; i++) {
+        var val = dictionary[keys[i]];
+        if (isUndefined(val)) {
+            var vals: string = keys[i].toString();
+            missing_col.push(keys[i]);
+        }
+    }
+}
+
+function local_compare_single(a: any, b: any): number {
+    if (a < b) {
+        return -1;
+    }
+    else if (a > b) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+
+}
+function local_compare(a: any, b: any, keys: any[]): number {
+    for (let i = 0; i < keys.length; i++) {
+        if (a[keys[i]] < b[keys[i]]) {
+            return -1;
+        }
+        else if (a[keys[i]] > b[keys[i]]) {
+            return 1;
+        }
+    }
+    return 0;
+}
