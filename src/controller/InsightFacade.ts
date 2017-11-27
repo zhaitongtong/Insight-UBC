@@ -482,23 +482,20 @@ export default class InsightFacade implements IInsightFacade {
                 }
 
                 if (hasTrans) {
-                    let groupSet: any = {};
-                    for (let course of result) {
+                    let sets: any = {};
+                    for (let courseOrRoom of result) {
                         let groupString = "";
-                        for (let groupKey of groups) {
-                            groupString += course[groupKey];
-                        }
-                        if (groupString in groupSet) {
-                            groupSet[groupString].push(course);
-                        } else {
-                            groupSet[groupString] = [];
-                            groupSet[groupString].push(course);
-                        }
+                        for (let groupKey of groups)
+                            groupString = groupString + " " + courseOrRoom[groupKey];
+                        if (!(groupString in sets))
+                            sets[groupString] = [courseOrRoom];
+                        else
+                            sets[groupString].push(courseOrRoom);
                     }
                     result = [];
-                    let groupSetKeys = Object.keys(groupSet);
+                    let groupSetKeys = Object.keys(sets);
                     for (let groupSetKey of groupSetKeys) {
-                        let oneGroup = groupSet[groupSetKey];
+                        let oneGroup = sets[groupSetKey];
                         let record: any = {};
                         let newValues: any[] = [];
                         for (let i = 0; i < oldKeys.length; i++) {
@@ -515,27 +512,27 @@ export default class InsightFacade implements IInsightFacade {
                             }
                         }
                         for (let j = 1; j < oneGroup.length; j++) {
-                            let course = oneGroup[j];
+                            let courseOrRoom = oneGroup[j];
                             for (let i = 0; i < oldKeys.length; i++) {
                                 if (applyTokens[i] === "MIN") {
-                                    if (course[oldKeys[i]] < newValues[i]) {
-                                        newValues[i] = course[oldKeys[i]];
+                                    if (courseOrRoom[oldKeys[i]] < newValues[i]) {
+                                        newValues[i] = courseOrRoom[oldKeys[i]];
                                     }
                                 } else if (applyTokens[i] === "MAX") {
-                                    if (course[oldKeys[i]] > newValues[i]) {
-                                        newValues[i] = course[oldKeys[i]];
+                                    if (courseOrRoom[oldKeys[i]] > newValues[i]) {
+                                        newValues[i] = courseOrRoom[oldKeys[i]];
                                     }
                                 } else if (applyTokens[i] === "AVG" || applyTokens[i] === "SUM") {
-                                    newValues[i].push(course[oldKeys[i]]);
+                                    newValues[i].push(courseOrRoom[oldKeys[i]]);
                                 } else {
-                                    if (!(course[oldKeys[i]] in newValues[i]))
-                                        newValues[i][course[oldKeys[i]]] = course[oldKeys[i]];
+                                    if (!(courseOrRoom[oldKeys[i]] in newValues[i]))
+                                        newValues[i][courseOrRoom[oldKeys[i]]] = courseOrRoom[oldKeys[i]];
                                 }
                             }
                         }
-                        for (let i = 0; i < groups.length; i++) {
+                        for (let i = 0; i < groups.length; i++)
                             record[groups[i]] = oneGroup[0][groups[i]];
-                        }
+
                         for (let i = 0; i < oldKeys.length; i++) {
                             if (applyTokens[i] === "COUNT") {
                                 record[newKeys[i]] = Object.keys(newValues[i]).length;
