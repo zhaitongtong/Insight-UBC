@@ -430,11 +430,11 @@ export default class InsightFacade implements IInsightFacade {
                 return;
             }
 
-            let hasTransformations = false;
+            let hasTrans = false;
             if ("TRANSFORMATIONS" in query)
-                hasTransformations = true;
+                hasTrans = true;
 
-            if (!isValid(query, isCourseQuery, hasTransformations)) {
+            if (!isValid(query, isCourseQuery, hasTrans)) {
                 console.log('query is not valid');
                 reject({code: 400,body: {}});
                 return;
@@ -446,7 +446,7 @@ export default class InsightFacade implements IInsightFacade {
                 let newKeys: any = [];
                 let applyTokens: any = [];
                 let oldKeys: any = [];
-                if (hasTransformations) {
+                if (hasTrans) {
                     transformations = query["TRANSFORMATIONS"];
                     groups = transformations["GROUP"];
                     applys = transformations["APPLY"];
@@ -481,7 +481,7 @@ export default class InsightFacade implements IInsightFacade {
                     result.push(c);
                 }
 
-                if (hasTransformations) {
+                if (hasTrans) {
                     let groupSet: any = {};
                     for (let course of result) {
                         let groupString = "";
@@ -503,9 +503,9 @@ export default class InsightFacade implements IInsightFacade {
                         let newValues: any[] = [];
                         for (let i = 0; i < oldKeys.length; i++) {
                             if (applyTokens[i] === "AVG" || applyTokens[i] === "SUM") {
-                                let countArray: any[] = [];
-                                countArray.push(oneGroup[0][oldKeys[i]]);
-                                newValues.push(countArray);
+                                let YOURARRAYTOSUM: any[] = [];
+                                YOURARRAYTOSUM.push(oneGroup[0][oldKeys[i]]);
+                                newValues.push(YOURARRAYTOSUM);
                             } else if (applyTokens[i] === "COUNT") {
                                 let countObject: any = {};
                                 countObject[oneGroup[0][oldKeys[i]]] = oneGroup[0][oldKeys[i]];
@@ -619,7 +619,7 @@ function isValid(query: any, isCourseQuery: boolean, hasTransformations: boolean
     return true;
 }
 
-function check_options(query: any, isCourseQuery: boolean, hasTransformations: boolean): boolean {
+function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): boolean {
     let options:any = query['OPTIONS'];
     let columns = options['COLUMNS'];
     if (columns.length < 1)
@@ -627,8 +627,7 @@ function check_options(query: any, isCourseQuery: boolean, hasTransformations: b
     let firstLetter = 'r';
     if (isCourseQuery)
         firstLetter = 'c';
-    if (!hasTransformations) {
-        console.log('here5')
+    if (!hasTrans) {
         for (let i = 0; i < columns.length; i++){
             let key = columns[i];
             if (firstLetter !== key.charAt(0))
