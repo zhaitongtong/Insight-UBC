@@ -9,6 +9,7 @@ var parse5 = require('parse5');
 import {isUndefined} from "util";
 import {isNumber} from "util";
 import {isString} from "util";
+import {isObject} from "util";
 
 let dictionary: { [index: string]: string } = {};
 dictionary = {
@@ -34,7 +35,9 @@ dictionary = {
     "rooms_furniture": "",
     "rooms_href": ""
 };
-
+let Decimal = require("decimal.js");
+let MKEY = ['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_year', 'rooms_lat', 'rooms_lon', 'rooms_seats'];
+let SKEY = ['courses_dept', 'courses_id', 'courses_instructor', 'courses_title', 'courses_uuid', 'rooms_fullname', 'rooms_shortname', 'rooms_number', 'rooms_name', 'rooms_address', 'rooms_type', 'rooms_furniture', 'rooms_href'];
 var fullname: any;
 var shortname: any;
 var address: any;
@@ -90,10 +93,10 @@ export default class InsightFacade implements IInsightFacade {
                             return;
                         }
                     }).catch(function () {
-                        reject({code: 400, body: {error: "some error"}});
+                        reject({code: 400, body: {error: "WTF"}});
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error:"some error"}});
+                    reject({code: 400, body: {error:"WTF"}});
                 }
             } else {
                 reject({code: 400, body: {error:"wrong id"}});
@@ -220,6 +223,7 @@ export default class InsightFacade implements IInsightFacade {
                                 reject(400);
                                 return;
                             }
+
                             if (file.charAt(file.length-1) === '/' || file.substring(file.length-9) === '.DS_Store') {
                                 continue;
                             }
@@ -242,9 +246,6 @@ export default class InsightFacade implements IInsightFacade {
                                     if (roomNode === null)
                                         return rooms;
                                     let fileName = file.substring(file.lastIndexOf('/')+1);
-
-                                    // LASR ROOM TYPE IS EMPTY
-
                                     if (fileName === 'LASR') { // hard code LASR now
                                         /*
                                          102	80	Classroom-Fixed Tables/Fixed Chairs	Tiered Large Group	More info
@@ -411,107 +412,334 @@ export default class InsightFacade implements IInsightFacade {
                 return;
             }
             let isCourseQuery: boolean = false;
-            if (query['OPTIONS']['COLUMNS'][0].charAt(0) === 'c') {
-                data = datasets["courses"];
-                isCourseQuery = true;
+            for (let key of columns) {
+                if (SKEY.includes(key) || MKEY.includes(key)) {
+                    if (key.charAt(0) === 'c') {
+                        data = datasets["courses"];
+                        isCourseQuery = true;
+                        break;
+                    } else {
+                        data = datasets["rooms"];
+                        break;
+                    }
+                }
             }
-            else
-                data = datasets["rooms"];
+
             if (isUndefined(data)) {
                 reject({code: 424, body: {"error": "missing dataset"}});
                 return;
             }
 
-            if (!isValid(query, isCourseQuery)) {
+            let hasTransformations = false;
+            if ("TRANSFORMATIONS" in query)
+                hasTransformations = true;
+
+            if (!isValid(query, isCourseQuery, hasTransformations)) {
                 console.log('query is not valid');
                 reject({code: 400,body: {}});
                 return;
             } else {
                 let where = query["WHERE"];
+                let transformations: any;
+                let groups: any[] = [];
+                let applys: any[] = [];
+                let newKeys: any = [];
+                let applyTokens: any = [];
+                let oldKeys: any = [];
+                if (hasTransformations) {
+                    transformations = query["TRANSFORMATIONS"];
+                    groups = transformations["GROUP"];
+                    applys = transformations["APPLY"];
+                    for (let apply of applys) {
+                        newKeys.push(Object.keys(apply)[0]);
+                        let applyObject = apply[Object.keys(apply)[0]];
+                        applyTokens.push(Object.keys(applyObject)[0]);
+                        oldKeys.push(applyObject[Object.keys(applyObject)[0]]);
+                    }
+                }
 
                 let result1: any = [];
                 for (let course of data) {
-                    if (courseIn(course, where))
+                    if (Object.keys(where).length === 0)
+                        result1.push(course);
+                    else if (courseIn(course, where))
                         result1.push(course);
                 }
 
-                let result2: any = [];
+                let result: any = [];
                 for (let i = 0; i < result1.length; i++) {
                     let course = result1[i];
                     let c: any = {};
                     for (let j in course) {
                         if (columns.includes(j))
                             c[j] = course[j];
+                        if (oldKeys.includes(j))
+                            c[j] = course[j];
+                        if (groups.includes(j))
+                            c[j] = course[j];
                     }
-                    result2.push(c);
+                    result.push(c);
                 }
 
-                fulfill({code: 200,body: {result: result2}});
+                if (hasTransformations) {
+                    let groupSet: any = {};
+                    for (let course of result) {
+                        let groupString = "";
+                        for (let groupKey of groups) {
+                            groupString += course[groupKey];
+                        }
+                        if (groupString in groupSet) {
+                            groupSet[groupString].push(course);
+                        } else {
+                            groupSet[groupString] = [];
+                            groupSet[groupString].push(course);
+                        }
+                    }
+                    result = [];
+                    let groupSetKeys = Object.keys(groupSet);
+                    for (let groupSetKey of groupSetKeys) {
+                        let oneGroup = groupSet[groupSetKey];
+                        let record: any = {};
+                        let newValues: any[] = [];
+                        for (let i = 0; i < oldKeys.length; i++) {
+                            if (applyTokens[i] === "AVG" || applyTokens[i] === "SUM") {
+                                newValues.push(new Decimal(oneGroup[0][oldKeys[i]]));
+                            } else if (applyTokens[i] === "COUNT") {
+                                let countObject: any = {};
+                                countObject[oneGroup[0][oldKeys[i]]] = oneGroup[0][oldKeys[i]];
+                                newValues.push(countObject);
+                            } else {
+                                newValues.push(oneGroup[0][oldKeys[i]]);
+                            }
+                        }
+                        for (let j = 1; j < oneGroup.length; j++) {
+                            let course = oneGroup[j];
+                            for (let i = 0; i < oldKeys.length; i++) {
+                                if (applyTokens[i] === "MIN") {
+                                    if (course[oldKeys[i]] < newValues[i]) {
+                                        newValues[i] = course[oldKeys[i]];
+                                    }
+                                } else if (applyTokens[i] === "MAX") {
+                                    if (course[oldKeys[i]] > newValues[i]) {
+                                        newValues[i] = course[oldKeys[i]];
+                                    }
+                                } else if (applyTokens[i] === "AVG" || applyTokens[i] === "SUM") {
+                                    newValues[i] = newValues[i].plus(new Decimal(course[oldKeys[i]]));
+                                } else {
+                                    if (!(course[oldKeys[i]] in newValues[i]))
+                                        newValues[i][course[oldKeys[i]]] = course[oldKeys[i]];
+                                }
+                            }
+                        }
+                        for (let i = 0; i < groups.length; i++) {
+                            record[groups[i]] = oneGroup[0][groups[i]];
+                        }
+                        for (let i = 0; i < oldKeys.length; i++) {
+                            if (applyTokens[i] === "COUNT") {
+                                record[newKeys[i]] = Object.keys(newValues[i]).length;
+                            } else if (applyTokens[i] === "AVG") {
+                                let sum = Number(newValues[i].toNumber().toFixed(2));
+                                record[newKeys[i]] = Number(new Decimal(sum / oneGroup.length).toFixed(2));
+                            } else if (applyTokens[i] === "SUM") {
+                                let sum = Number(newValues[i].toNumber().toFixed(2));
+                                record[newKeys[i]] = sum;
+                            } else
+                                record[newKeys[i]] = newValues[i];
+                        }
+                        result.push(record);
+                    }
+                }
+
+                if ("ORDER" in options) {
+                    let order = options["ORDER"];
+                    if (!isObject(order)) {
+                        result.sort(function (a: any, b: any) {
+                            if (a[order] > b[order])
+                                return 1;
+                            else if (a[order] < b[order])
+                                return -1;
+                            else
+                                return 0;
+                        });
+                    } else {
+                        let direction = order["dir"];
+                        let orderKeys: any = order["keys"];
+                        result.sort(function (a: any, b: any) {
+                            for (let orderKey of orderKeys) {
+                                if (a[orderKey] !== b[orderKey]) {
+                                    if (direction === "UP") {
+                                        if (a[orderKey] > b[orderKey])
+                                            return 1;
+                                        else if (a[orderKey] < b[orderKey])
+                                            return -1;
+                                    }
+                                    else {
+                                        if (a[orderKey] > b[orderKey])
+                                            return -1;
+                                        else if (a[orderKey] < b[orderKey])
+                                            return 1;
+                                    }
+                                }
+                            }
+                            return 0;
+                        });
+                    }
+                }
+
+                fulfill({code: 200,body: {result: result}});
                 return;
             }
         });
     }
 }
 
-function isValid(query: any, isCourseQuery: boolean): boolean {
+function isValid(query: any, isCourseQuery: boolean, hasTransformations: boolean): boolean {
     let where: any = null;
     if (!("WHERE" in query))
         return false;
     where = query["WHERE"];
-    let options: any = null;
-    if (!("OPTIONS" in query))
-        return false;
-    options = query["OPTIONS"];
-    let columns: any = null;
-    if (!("COLUMNS" in options))
-        return false;
-    columns = options["COLUMNS"];
-    let order: any = null;
-    if ("ORDER" in options)
-        order = options["ORDER"];
-
-    if (columns.length == 0)
-        return false;
-    //modification for room
-
-    for (let column of columns) {
-        let value = dictionary[column];
-        if ((column.substring(0, column.indexOf("_")) !== "courses" && column.substring(0, column.indexOf("_")) !== "rooms") || isUndefined(value)) {
+    if (Object.keys(where).length !== 0) {
+        if (!check_where(where)) {
             return false;
         }
-        if (column.substring(0, column.indexOf("_")) === "courses" && !isCourseQuery)
-            return false;
-        if (column.substring(0, column.indexOf("_")) === "rooms" && isCourseQuery)
-            return false;
     }
-
-    if (!check_order(order, columns)) {
+    if (!check_options(query, isCourseQuery, hasTransformations)) {
         return false;
     }
-
-    if (!check_where(where))
-        return false;
     return true;
 }
 
-function check_order(order: any, columns: any): boolean {
-    if (!isUndefined(order)) {
-        if (typeof order == "string") {
-            let valid = false;
-            for (let column of columns) {
-                if (order == column) {
-                    valid = true;
-                    break;
-                }
-            }
-            if (!valid) {
+function check_options(query: any, isCourseQuery: boolean, hasTransformations: boolean): boolean {
+    let options:any = query['OPTIONS'];
+    let columns = options['COLUMNS'];
+    if (columns.length < 1)
+        return false;
+    let firstLetter = 'r';
+    if (isCourseQuery)
+        firstLetter = 'c';
+    if (!hasTransformations) {
+        console.log('here5')
+        for (let i = 0; i < columns.length; i++){
+            let key = columns[i];
+            if (firstLetter !== key.charAt(0))
                 return false;
+            if(!(MKEY.includes(key) || SKEY.includes(key)))
+                return false;
+        }
+        if('ORDER' in options){
+            let order = options['ORDER'];
+            if (isString(order)) { // order is string
+                if (!columns.includes(order))
+                    return false;
+            } else if (isObject(order)) { // order is object
+                if (Object.keys(order).length !== 2)
+                    return false;
+                if (!("dir" in order))
+                    return false;
+                if (order["dir"] !== "DOWN" && order["dir"] !== "UP")
+                    return false;
+                if (!("keys" in order))
+                    return false;
+                let orderKeys: any = order["keys"];
+                if (orderKeys.length === 0)
+                    return false;
+                for (let i = 0; i < orderKeys.length; i++) {
+                    let key = orderKeys[i];
+                    if (!columns.includes(key))
+                        return false;
+                }
+            } else
+                return false;
+        }
+        return true;
+    } else {
+        let transformations = query["TRANSFORMATIONS"];
+        if (!("GROUP" in transformations))
+            return false;
+        let groups = transformations["GROUP"];
+        if (groups.length === 0)
+            return false;
+        for (let group of groups) {
+            if (!(MKEY.includes(group) || SKEY.includes(group)))
+                return false;
+            if (group.charAt(0) !== firstLetter)
+                return false;
+        }
+        if (!("APPLY" in transformations))
+            return false;
+        let applys = transformations["APPLY"];
+        let newKeys: any = [];
+        for (let apply of applys) {
+            if (Object.keys(apply).length !== 1)
+                return false;
+            let newString: string = Object.keys(apply)[0];
+            if (newString.indexOf('_') >= 0)
+                return false;
+            if (newKeys.includes(newString))
+                return false;
+            newKeys.push(newString);
+            let applyObject: any = apply[newString];
+            if (Object.keys(applyObject).length !== 1)
+                return false;
+            let applyToken: string = Object.keys(applyObject)[0];
+            if (!(applyToken === "MAX" || applyToken === "MIN" || applyToken === "AVG" || applyToken === "COUNT" || applyToken === "SUM"))
+                return false;
+            let oldString: string = applyObject[applyToken];
+            if (applyToken === "MAX" || applyToken === "MIN" || applyToken === "AVG" || applyToken === "SUM") {
+                if (!MKEY.includes(oldString))
+                    return false;
+            } else {
+                if (!(MKEY.includes(oldString) || SKEY.includes(oldString)))
+                    return false;
             }
         }
+        for (let i = 0; i < columns.length; i++){
+            let key = columns[i];
+            if (key.indexOf('_') >= 0) {
+                if (!(MKEY.includes(key) || SKEY.includes(key)))
+                    return false;
+                if (firstLetter !== key.charAt(0))
+                    return false;
+                if (!groups.includes(key))
+                    return false;
+            } else {
+                let hasThisKey = false;
+                for (let apply of applys) {
+                    if (key in apply)
+                        hasThisKey = true;
+                }
+                if (!hasThisKey)
+                    return false;
+            }
+        }
+        if('ORDER' in options){
+            let order = options['ORDER'];
+            if (isString(order)) { // order is string
+                if (!columns.includes(order))
+                    return false;
+            } else if (isObject(order)) { // order is object
+                if (Object.keys(order).length !== 2)
+                    return false;
+                if (!("dir" in order))
+                    return false;
+                if (order["dir"] !== "DOWN" && order["dir"] !== "UP")
+                    return false;
+                if (!("keys" in order))
+                    return false;
+                let orderKeys: any = order["keys"];
+                if (orderKeys.length === 0)
+                    return false;
+                for (let i = 0; i < orderKeys.length; i++) {
+                    let key = orderKeys[i];
+                    if (!columns.includes(key))
+                        return false;
+                }
+            } else
+                return false;
+        }
+        return true;
     }
-    return true;
 }
-
 
 function check_where(where: any): boolean {
     if (Object.keys(where).length !== 1)
@@ -519,11 +747,9 @@ function check_where(where: any): boolean {
     let top = Object.keys(where)[0];
     switch (top) {
         case "AND": {
-            // we add this one
             if(where[top].length === 0){
                 return false;
             }
-
             let filters = where[top];
             for (let i = 0; i < filters.length; i++) {
                 if (!check_where(filters[i]))
@@ -549,8 +775,6 @@ function check_where(where: any): boolean {
             let mValue = m[mKey];
             return isNumber(mValue) && (mKey === 'courses_avg' || mKey === 'courses_pass' || mKey === 'courses_fail' || mKey === 'courses_audit' ||
                 mKey === 'rooms_lat' || mKey === 'rooms_lon' || mKey === 'rooms_seats' || mKey === 'courses_year');
-            //add course year here
-            // add room
 
         }
         case "GT": {
@@ -577,7 +801,6 @@ function check_where(where: any): boolean {
             return isString(sValue) && (sKey === 'courses_dept' || sKey === 'courses_id' || sKey === 'courses_instructor' || sKey === 'courses_title' || sKey === 'courses_uuid' ||
                 sKey === 'rooms_fullname' || sKey === 'rooms_shortname' || sKey === 'rooms_number' || sKey === 'rooms_name' || sKey === 'rooms_address' ||
                 sKey === 'rooms_type' || sKey === 'rooms_furniture' || sKey === 'rooms_href');
-            // add more cases for room
         }
 
         case "NOT": {
@@ -655,9 +878,6 @@ function courseIn(course: any, where: any): boolean {
     }
 }
 
-
-//two helper
-
 function processBuilding(node: any) {
     let skip: boolean = false;
     if (node['nodeName'] !== '#text' || node['value'].trim().length === 0)
@@ -732,8 +952,6 @@ function processRoom(node: any, fileName: string, rooms: any[]) {
     }
 }
 
-//a clase can occur more than once in HTML
-
 function searchTbody(node: any) : any{
     if (node['nodeName'] === 'tbody')
         return node;
@@ -749,10 +967,6 @@ function searchTbody(node: any) : any{
     }
     return null;
 }
-
-//Geocoding an address to a latitude/longitude pair is usually performed using online web services.
-//To avoid problems with our spamming different geolocation providers we will be providing a web service for you to use for this purpose.
-
 
 function getLatLon(urls: string[]): Promise<Array<any>> {
     return new Promise(function (fulfill, reject) {
@@ -795,330 +1009,4 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
             reject(err);
         })
     });
-}
-
-function perform_Query_transform(query: any, this_obj: InsightFacade): Promise<InsightResponse> {
-    let j_query = JSON.stringify(query);
-    let j_obj = JSON.parse(j_query);
-
-    let where = j_obj["WHERE"];
-    let transformation = j_obj["TRANSFORMATIONS"];
-    let group = transformation["GROUP"];
-    let apply = transformation["APPLY"];
-    let options = j_obj["OPTIONS"];
-    let columns = options["COLUMNS"];
-    let order = options["ORDER"];
-    let form = options["FORM"];
-
-    let temp: string = group[0];
-    let id = temp.substring(0, temp.indexOf("_"));
-
-    let all_columns: string[];
-    if (id == "courses") {
-        all_columns = [
-            "courses_dept",
-            "courses_avg",
-            "courses_uuid",
-            "courses_title",
-            "courses_instructor",
-            "courses_fail",
-            "courses_audit",
-            "courses_pass",
-            "courses_year",
-            "courses_id",
-            "courses_size"
-        ];
-    }
-    else if (id == "rooms") {
-
-        all_columns = [
-            "rooms_fullname",
-            "rooms_shortname",
-            "rooms_name",
-            "rooms_number",
-            "rooms_address",
-            "rooms_lat",
-            "rooms_lon",
-            "rooms_seats",
-            "rooms_furniture",
-            "rooms_href",
-            "rooms_type"
-        ];
-    }
-
-
-    let helper_query = {
-        "WHERE": where,
-        "OPTIONS": {
-            "COLUMNS": all_columns
-            ,
-            "FORM": "TABLE"
-        }
-    };
-
-    return new Promise((fulfill, reject) => {
-        this_obj.performQuery(helper_query).then(function (response: InsightResponse) {
-            // get the groups
-
-            let j_response = JSON.parse(JSON.stringify(response.body));
-
-            let table = j_response["result"];
-
-            if (table.length < 1) {
-                return fulfill(response);
-            }
-            for (let tuple of table) {
-
-                let group_id_value: string = "";
-                for (let group_key of group) {
-                    group_id_value += tuple[group_key] + "_";
-                }
-                tuple["group_id"] = group_id_value;
-            }
-
-            table.sort((a: any, b: any) => {
-                return local_compare_single(a["group_id"], b["group_id"]);
-            });
-
-
-            let prev_group_name = table[0]["group_id"];
-            let groups: {[index: string]: any} = {};
-            groups[prev_group_name] = [];
-
-            for (let i = 0; i < table.length; i++) {
-                let group_name = table[i]["group_id"];
-                if (prev_group_name == group_name) {
-                    groups[prev_group_name].push(table[i]);
-                }
-                else {
-                    prev_group_name = group_name;
-                    groups[prev_group_name] = [];
-                    groups[prev_group_name].push(table[i]);
-                }
-            }
-
-            let group_keys = Object.keys(groups);
-
-            let final_groups = [];
-
-            for (let key of group_keys) {
-
-                let group = groups[key];
-                let result_list = [];
-                let final_group_obj: {[index: string]: any} = {};
-
-                final_group_obj["group_id"] = key;
-
-
-                for (let item of apply) {
-
-                    let item_key = Object.keys(item)[0];  //ie maxSeats
-                    let function_use = Object.keys(item[item_key])[0]; // "MAX"
-                    let function_target = item[item_key][function_use]; //"rooms_seats"
-
-                    let result;
-
-                    switch (function_use) {
-                        case "MAX":
-
-                            //groups[group_keys[0]]   [{...}, {...}, {...} ]  same as  groups[key]  = group
-                            // groups[group_keys[0]][0]    {....}   group[0]
-                            // group[group_keys[0]][0] [function_target]  group[0][function_target] a specific value
-
-                            if (typeof group[0][function_target] != "number") {
-                                throw Error("Invalid type 1440");
-                            }
-
-                            let max = group[0][function_target];
-
-                            for (let obj of group) {
-                                if (obj[function_target] > max) {
-                                    max = obj[function_target];
-                                }
-                            }
-
-                            result = max;
-                            break;
-                        case "MIN":
-
-                            if (typeof group[0][function_target] != "number") {
-                                throw Error("Invalid type 1440");
-                            }
-
-                            let min = group[0][function_target];
-
-                            for (let obj of group) {
-                                if (obj[function_target] < min) {
-                                    min = obj[function_target];
-                                }
-                            }
-                            result = min;
-                            break;
-                        case "AVG":
-                            let sum = 0;
-                            result = 0;
-                            if (typeof group[0][function_target] != "number") {
-                                throw Error("Invalid type 1440");
-                            }
-
-                            let counter = 0;
-
-                            for (let obj of group) {
-                                let temp = (obj[function_target] * 10);
-                                temp = Number(temp.toFixed(0));
-                                sum += temp;
-                                counter++;
-                            }
-
-                            result = sum / counter / 10;
-                            result = Number(result.toFixed(2));
-
-                            break;
-                        case"COUNT":
-
-                            result = 0;
-                            let temp = group;
-                            if (temp.length > 0) {
-
-                                temp.sort((a: any, b: any) => {
-                                    return local_compare_single(a[function_target], b[function_target]);
-                                });
-
-
-                                let prev_val = temp[0][function_target];
-                                result = 1;
-                                for (let obj of temp) {
-                                    if (obj[function_target] != prev_val) {
-                                        result++;
-                                        prev_val = obj[function_target];
-                                    }
-                                }
-
-                            }
-                            else {
-                                console.log("empty list 1501,count =0");
-                            }
-
-                            break;
-                        case"SUM":
-                            result = 0;
-                            if (typeof group[0][function_target] != "number") {
-                                throw Error("Invalid type 1440");
-                            }
-
-                            for (let obj of group) {
-                                result += obj[function_target];
-                            }
-
-                            break;
-                        default:
-                            throw Error("invalid function to use 1447");
-                    }
-
-                    result_list.push(result);
-                    final_group_obj[item_key] = result;
-
-                }
-
-
-                let temp_group = transformation["GROUP"];
-
-                for (let item of temp_group) {
-                    final_group_obj[item] = group[0][item];
-                }
-                final_groups.push(final_group_obj);
-
-            }
-
-
-            if (!isUndefined(order)) {
-
-                if (typeof order == "object") {
-                    let dir = order["dir"];
-                    let keys = order["keys"];
-
-                    if (dir == "UP") {
-                        final_groups.sort((a: any, b: any) => {
-                            return local_compare(a, b, keys);
-                        });
-
-                    }
-                    else if (dir == "DOWN") {
-
-                        final_groups.sort((a: any, b: any) => {
-                            return -1 * local_compare(a, b, keys);
-                        });
-
-                    }
-                    else {
-                        throw Error("invalid direction line 903");
-                    }
-                }
-                else {
-
-                    final_groups.sort((a: any, b: any) => {
-                        return local_compare_single(a[order], b[order]);
-                    });
-
-
-                }
-            }
-
-            let ret_list = [];
-            for (let group of final_groups) {
-                let ret_obj: {[index: string]: any} = {};
-
-                for (let column of columns) {
-                    ret_obj[column] = group[column];
-                }
-                ret_list.push(ret_obj);
-            }
-
-
-            let ret_obj = {render: form, result: ret_list};
-            fulfill({code: 200, body: ret_obj});
-        }).catch(function (err) {
-            reject({code: 400, body: {"error": "error in perform_query_transform 1647"}});
-        });
-
-    });
-
-
-}
-
-
-
-function check_missing(keys: any, missing_col: string []) {
-
-    for (var i = 0; i < keys.length; i++) {
-        var val = dictionary[keys[i]];
-        if (isUndefined(val)) {
-            var vals: string = keys[i].toString();
-            missing_col.push(keys[i]);
-        }
-    }
-}
-
-function local_compare_single(a: any, b: any): number {
-    if (a < b) {
-        return -1;
-    }
-    else if (a > b) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-
-}
-function local_compare(a: any, b: any, keys: any[]): number {
-    for (let i = 0; i < keys.length; i++) {
-        if (a[keys[i]] < b[keys[i]]) {
-            return -1;
-        }
-        else if (a[keys[i]] > b[keys[i]]) {
-            return 1;
-        }
-    }
-    return 0;
 }
