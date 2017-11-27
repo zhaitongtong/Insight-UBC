@@ -485,7 +485,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
@@ -507,9 +507,134 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
-    })
+    });
+
+    it("d3 A", function (done) {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 300
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect.fail("Should not happen");
+        });
+    });
+
+    it("d3 B", function (done) {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {},
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_furniture"
+                ],
+                "ORDER": "rooms_furniture"
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_furniture"],
+                "APPLY": []
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect.fail("Should not happen");
+        });
+    });
+
+    it("d3 many applys", function (done) {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(200);
+            console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect.fail("Should not happen");
+        });
+    });
 });
