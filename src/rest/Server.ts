@@ -63,7 +63,6 @@ export default class Server {
 
                 // Receives queries. Although these queries never change the server (and thus could be GETs)
                 // they are formed by sending JSON bodies, which is not standard for normal GET requests.
-                // curl -is -X POST -d '{ "key": "value" }' http://localhost:4321/query
                 that.rest.post('/query', restify.bodyParser(), RouteHandler.postQuery);
 
                 that.rest.del('/dataset/:id', RouteHandler.deleteDataset);
@@ -85,10 +84,6 @@ export default class Server {
         });
     }
 
-    // The next two methods handle the echo service.
-    // These are almost certainly not the best place to put these, but are here for your reference.
-    // By updating the Server.echo function pointer above, these methods can be easily moved.
-
     public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
         try {
@@ -102,12 +97,11 @@ export default class Server {
         return next();
     }
 
-    public static performEcho(msg: string): InsightResponse {
+    public static performEcho(msg: string): any {
         if (typeof msg !== 'undefined' && msg !== null) {
             return {code: 200, body: {message: msg + '...' + msg}};
         } else {
             return {code: 400, body: {error: 'Message not provided'}};
         }
     }
-
 }
