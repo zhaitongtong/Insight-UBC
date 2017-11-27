@@ -538,7 +538,7 @@ export default class InsightFacade implements IInsightFacade {
                             if (applyTokens[i] === "COUNT") {
                                 record[newKeys[i]] = Object.keys(newValues[i]).length;
                             } else if (applyTokens[i] === "AVG") {
-                                let sum = Number(newValues[i].toNumber().toFixed(2));
+                                let sum = Number(newValues[i].toNumber());
                                 record[newKeys[i]] = Number(new Decimal(sum / oneGroup.length).toFixed(2));
                             } else if (applyTokens[i] === "SUM") {
                                 let sum = Number(newValues[i].toNumber().toFixed(2));
