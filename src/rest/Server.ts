@@ -1,12 +1,6 @@
-/**
- * This is the REST entry point for the project.
- * Restify is configured here.
- */
-
 import restify = require('restify');
-
 import Log from "../Util";
-import {InsightResponse} from "../controller/IInsightFacade";
+import RouteHandler from './RouteHandler';
 
 /**
  * This configures the REST endpoints for the server.
@@ -54,23 +48,25 @@ export default class Server {
                     name: 'insightUBC'
                 });
 
-                // support CORS
-                that.rest.use(function crossOrigin(req, res, next) {
-                    res.header("Access-Control-Allow-Origin", "*");
-                    res.header("Access-Control-Allow-Headers", "X-Requested-With");
-                    return next();
-                });
+                // Serves static files for the UI.
+                that.rest.get("/public/.*", restify.serveStatic({
+                    directory: __dirname
+                }));
 
-                that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
-                    res.send(200);
-                    return next();
-                });
+                // Loads the homepage.
+                // curl -is  http://localhost:4321/
+                that.rest.get('/', RouteHandler.getHomepage);
 
-                // provides the echo service
-                // curl -is  http://localhost:4321/echo/myMessage
-                that.rest.get('/echo/:msg', Server.echo);
+                // Sends a dataset. Is idempotent and can create or update a dataset id.
+                // curl localhost:4321/dataset/test --upload-file FNAME.zip
+                that.rest.put('/dataset/:id', RouteHandler.putDataset);
 
-                // Other endpoints will go here
+                // Receives queries. Although these queries never change the server (and thus could be GETs)
+                // they are formed by sending JSON bodies, which is not standard for normal GET requests.
+                // curl -is -X POST -d '{ "key": "value" }' http://localhost:4321/query
+                that.rest.post('/query', restify.bodyParser(), RouteHandler.postQuery);
+
+                that.rest.del('/dataset/:id', RouteHandler.deleteDataset);
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);
