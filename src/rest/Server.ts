@@ -1,6 +1,13 @@
+/**
+ * This is the REST entry point for the project.
+ * Restify is configured here.
+ */
+
 import restify = require('restify');
+
 import Log from "../Util";
-import RouteHandler from './RouteHandler';
+import {InsightResponse} from "../controller/IInsightFacade";
+import InsightFacade from "../controller/InsightFacade";
 
 /**
  * This configures the REST endpoints for the server.
@@ -48,24 +55,31 @@ export default class Server {
                     name: 'insightUBC'
                 });
 
-                // Serves static files for the UI.
-                that.rest.get("/public/.*", restify.serveStatic({
-                    directory: __dirname
+                // support CORS
+                //that.rest.use(function crossOrigin(req, res, next) {
+                //    res.header("Access-Control-Allow-Origin", "*");
+                //    res.header("Access-Control-Allow-Headers", "X-Requested-With");
+                //    return next();
+                //});
+
+                that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
+                that.rest.get(/\/.+/, restify.serveStatic({
+                    directory: './src/rest'
                 }));
 
-                // Loads the homepage.
-                // curl -is  http://localhost:4321/
-                that.rest.get('/', RouteHandler.getHomepage);
+                that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
+                    res.send(200);
+                    return next();
+                });
 
-                // Sends a dataset. Is idempotent and can create or update a dataset id.
-                // curl localhost:4321/dataset/test --upload-file FNAME.zip
-                that.rest.put('/dataset/:id', RouteHandler.putDataset);
+                // provides the echo service
+                // curl -is  http://localhost:4321/echo/myMessage
+                that.rest.get('/echo/:msg', Server.echo);
 
-                // Receives queries. Although these queries never change the server (and thus could be GETs)
-                // they are formed by sending JSON bodies, which is not standard for normal GET requests.
-                that.rest.post('/query', restify.bodyParser(), RouteHandler.postQuery);
-
-                that.rest.del('/dataset/:id', RouteHandler.deleteDataset);
+                // Other endpoints will go here
+                that.rest.put('/dataset/:id', Server.putDataset);
+                that.rest.del('/dataset/:id', Server.deleteDataset);
+                that.rest.post('/query', Server.postQuery);
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);
@@ -84,6 +98,48 @@ export default class Server {
         });
     }
 
+    public static putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+        return new InsightFacade().addDataset(req.params.id, new Buffer(req.params.body).toString('base64'))
+            .then(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next()
+            }).catch(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next();
+            });
+    }
+
+    public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+        return new InsightFacade().removeDataset(req.params.id)
+            .then(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next();
+            }).catch(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next();
+            });
+    }
+
+    public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
+        return new InsightFacade().performQuery(req.body)
+            .then(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next();
+            }).catch(function(response: InsightResponse){
+                res.json(response.body);
+                res.status(response.code);
+                return next();
+            })
+    }
+    // The next two methods handle the echo service.
+    // These are almost certainly not the best place to put these, but are here for your reference.
+    // By updating the Server.echo function pointer above, these methods can be easily moved.
+
     public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
         try {
@@ -97,11 +153,12 @@ export default class Server {
         return next();
     }
 
-    public static performEcho(msg: string): any {
+    public static performEcho(msg: string): InsightResponse {
         if (typeof msg !== 'undefined' && msg !== null) {
             return {code: 200, body: {message: msg + '...' + msg}};
         } else {
             return {code: 400, body: {error: 'Message not provided'}};
         }
     }
+
 }
