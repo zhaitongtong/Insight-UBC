@@ -390,7 +390,9 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
+                console.log('remove ' + "./test/" + id + ".json");
                 delete datasets[id];
+                fs.unlink("./test/" + id + ".json");
                 fulfill({code: 204, body: "the operation was successful."});
                 return;
             } else {
