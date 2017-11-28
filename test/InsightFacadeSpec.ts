@@ -38,13 +38,20 @@ describe("InsightFacade", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-            //console.log(response)
+            expect.fail();
         });
     });
 
-    it("Should not be able to add an wrong id", function () {
+    it("Should not be able to add an dataset with wrong id (400)", function () {
         return facade.addDataset('ubc', zipFileContents).then(function (response: InsightResponse) {
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Try to solve the final bug (NOT PASS 400)", function () {
+        return facade.addDataset('rooms', zipFileContents).then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
@@ -52,7 +59,16 @@ describe("InsightFacade", function () {
         });
     });
 
-    it("Should not be able to add an room zip without html", function () {
+    it("Should be able to add a new rooms dataset (NOT PASS 204)", function () {
+        //facade.addDataset('rooms', zipRoomContents);
+        return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
+            expect(response.code).to.equal(204);
+        }).catch(function (response: InsightResponse) {
+            expect.fail();
+        });
+    });
+
+    it("Should not be able to add an room zip without html (NOT PASS 400)", function () {
         return facade.addDataset('rooms', zipRoomfakeContents).then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
@@ -61,31 +77,22 @@ describe("InsightFacade", function () {
         });
     });
 
-
-    it("Should be able to add a new rooms dataset (204)", function () {
-        return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(204);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-            //console.log(response)
-        });
-    });
-
-    it("Should be able to update an existing dataset (201)", function () {
-        //facade.addDataset('courses', zipFileContents)
+    it("Should be able to update an existing courses dataset (201)", function () {
+        facade.addDataset('courses', zipFileContents);
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(201);
-            log.trace(response)
+            //log.trace(response)
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
-    it("Should be able to update an existing dataset (201)", function () {
+    it("Should be able to update an existing rooms dataset (201)", function () {
+        facade.addDataset('rooms', zipRoomContents)
         return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(201);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
             //console.log(response)
         });
     });
@@ -99,14 +106,12 @@ describe("InsightFacade", function () {
         });
     });
 
-    //Test for removeDataset
-
     it("Should able to remove a dataset (204)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
             //console.log(response.code)
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -132,7 +137,7 @@ describe("InsightFacade", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -154,7 +159,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(204);
             //console.log(response.code)
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -172,7 +177,7 @@ describe("InsightFacade", function () {
         return facade.addDataset('courses', zipFileContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -196,7 +201,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -222,7 +227,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -250,7 +255,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -277,7 +282,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -304,7 +309,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -331,7 +336,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -358,7 +363,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -385,7 +390,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -411,7 +416,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -437,7 +442,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -463,7 +468,7 @@ describe("InsightFacade", function () {
             let result: any = response.body;
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -508,7 +513,7 @@ describe("InsightFacade", function () {
             //console.log(result.length); // 56
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -544,7 +549,7 @@ describe("InsightFacade", function () {
             //console.log(result.length); // 64612?
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -580,7 +585,7 @@ describe("InsightFacade", function () {
             //console.log(result.length); // 64612?
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -631,7 +636,7 @@ describe("InsightFacade", function () {
             //console.log(result.length); // 64612?
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
 
     });
@@ -669,7 +674,7 @@ describe("InsightFacade", function () {
             //console.log(result.length); // 64612?
             //console.log(result);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -682,7 +687,7 @@ describe("InsightFacade", function () {
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
         });
     });
 
@@ -755,7 +760,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    xit("Should not be able to invalid wrong query when s_key is number.", function (done) {
+    it("Should not be able to invalid wrong query when s_key is number.", function (done) {
         //this.timeout(100000);
         let query: any = {
             "WHERE": {
@@ -791,7 +796,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    xit("Should not be able to query when the logic comparison fails.", function (done) {
+    it("Should not be able to query when the logic comparison fails.", function (done) {
         //this.timeout(100000);
         let query: any = {
             "WHERE": {"AND": [{"GT": {"courss_avg": "90"}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
@@ -804,7 +809,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    xit("Should not be able to query when the logic comparison fails.", function (done) {
+    it("Should not be able to query when the logic comparison fails.", function (done) {
         //this.timeout(100000);
         let query: any = {
             "WHERE": {
@@ -825,7 +830,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    xit("Should not be able to query when GT is empty.", function (done) {
+    it("Should not be able to query when GT is empty.", function (done) {
         //this.timeout(100000);
         let query: any = {
             "WHERE": {"AND": [{"GT": {}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
@@ -838,7 +843,7 @@ describe("InsightFacade", function () {
         });
     });
 
-    xit("Should not be able to query when EQ is empty.", function (done) {
+    it("Should not be able to query when EQ is empty.", function (done) {
         //this.timeout(100000);
         let query: any = {
             "WHERE": {"AND": [{"GT": {}}, {"EQ": {"courss_avg": "85"}}, {"IS": {"courses_dept": "cpsc"}}]},
@@ -855,7 +860,7 @@ describe("InsightFacade", function () {
         return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
         }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
+            expect.fail();
             //console.log(response)
         });
     });
@@ -879,7 +884,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -901,7 +906,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -942,7 +947,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -983,7 +988,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -1007,7 +1012,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -1030,7 +1035,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 
@@ -1092,7 +1097,7 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(200);
             //console.log(response.body);
         }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
+            expect.fail();
         });
     });
 });
