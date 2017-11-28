@@ -78,8 +78,8 @@ export default class Server {
 
                 // Other endpoints will go here
                 that.rest.put('/dataset/:id', Server.putDataset);
-                that.rest.del('/dataset/:id', Server.deleteDataset);
                 that.rest.post('/query', Server.postQuery);
+                that.rest.del('/dataset/:id', Server.deleteDataset);
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);
@@ -101,12 +101,12 @@ export default class Server {
     public static putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
         return new InsightFacade().addDataset(req.params.id, new Buffer(req.params.body).toString('base64'))
             .then(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
-                return next()
+                res.json(response.body);
+                return next();
             }).catch(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
+                res.json(response.body);
                 return next();
             });
     }
@@ -114,12 +114,12 @@ export default class Server {
     public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
         return new InsightFacade().removeDataset(req.params.id)
             .then(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
+                res.json(response.body);
                 return next();
             }).catch(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
+                res.json(response.body);
                 return next();
             });
     }
@@ -127,12 +127,12 @@ export default class Server {
     public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
         return new InsightFacade().performQuery(req.body)
             .then(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
+                res.json(response.body);
                 return next();
             }).catch(function(response: InsightResponse){
-                res.json(response.body);
                 res.status(response.code);
+                res.json(response.body);
                 return next();
             })
     }
