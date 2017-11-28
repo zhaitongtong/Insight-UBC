@@ -8,7 +8,6 @@ describe("InsightFacade", function () {
 
     var zipFileContents: string = null;
     var zipRoomContents: string = null;
-    var zipRoomfakeContents: string = null;
     var facade: InsightFacade = null;
 
     let fs = require('fs');
@@ -18,7 +17,6 @@ describe("InsightFacade", function () {
         Log.info('InsightController::before() - start');
         zipFileContents = new Buffer(fs.readFileSync('./data/courses.zip')).toString('base64');
         zipRoomContents = new Buffer(fs.readFileSync('./data/rooms.zip')).toString('base64');
-        zipRoomfakeContents = new Buffer(fs.readFileSync('./data/roomsfake.zip')).toString('base64');
         /*try {
             fs.unlinkSync('./id.json');
         } catch (err) {
@@ -42,25 +40,6 @@ describe("InsightFacade", function () {
             //console.log(response)
         });
     });
-
-    it("Should not be able to add an wrong id", function () {
-        return facade.addDataset('ubc', zipFileContents).then(function (response: InsightResponse) {
-            expect.fail();
-        }).catch(function (response: InsightResponse) {
-            expect(response.code).to.equal(400);
-            //console.log(response)
-        });
-    });
-
-    it("Should not be able to add an room zip without html", function () {
-        return facade.addDataset('rooms', zipRoomfakeContents).then(function (response: InsightResponse) {
-            expect.fail();
-        }).catch(function (response: InsightResponse) {
-            expect(response.code).to.equal(400);
-            //console.log(response)
-        });
-    });
-
 
     it("Should be able to add a new rooms dataset (204)", function () {
         return facade.addDataset('rooms', zipRoomContents).then(function (response: InsightResponse) {
@@ -95,7 +74,7 @@ describe("InsightFacade", function () {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
-            //console.log(response)
+            console.log(response)
         });
     });
 
@@ -104,7 +83,7 @@ describe("InsightFacade", function () {
     it("Should able to remove a dataset (204)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
-            //console.log(response.code)
+            console.log(response.code)
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -112,14 +91,6 @@ describe("InsightFacade", function () {
 
     it("Should not able to remove a dataset (404)", function () {
         return facade.removeDataset('courses').then(function (response: InsightResponse) {
-            expect.fail();
-        }).catch(function (response: InsightResponse) {
-            expect(response.code).to.equal(404);
-        });
-    });
-
-    it("test for wrong id", function () {
-        return facade.removeDataset('ubc').then(function (response: InsightResponse) {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(404);
@@ -143,7 +114,7 @@ describe("InsightFacade", function () {
             expect.fail();
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
-            //console.log(response)
+            console.log(response)
         });
     });
 
@@ -152,7 +123,7 @@ describe("InsightFacade", function () {
     it("Should able to remove a dataset (204) for rooms", function () {
         return facade.removeDataset('rooms').then(function (response: InsightResponse) {
             expect(response.code).to.equal(204);
-            //console.log(response.code)
+            console.log(response.code)
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -194,201 +165,12 @@ describe("InsightFacade", function () {
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
             let result: any = response.body;
-            //console.log(result);
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
 
     });
-
-    it("check options test", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": ["courses_avg",
-                    "courses_dept"]
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
-
-    it("test course avg down", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "DOWN",
-                    "keys": ["courses_avg"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("test course avg up", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "UP",
-                    "keys": ["courses_avg"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("test order keys does not exist", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "UP",
-                    "keys": ["maxSeats"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("test order dir does not exist", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "MID",
-                    "keys": ["maxSeats"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("test order dir is empty", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "",
-                    "keys": ["maxSeats"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
-    it("test order dir is empty", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": {
-                    "dir": "",
-                    "keys": ["maxSeats"]
-                }
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-    });
-
 
     it("Simple query 2", function () {
         let myQ = {
@@ -409,59 +191,7 @@ describe("InsightFacade", function () {
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
             let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
-
-    it("Simple query 2 A", function () {
-        let myQ = {
-            "WHERE": {
-                "GT": {
-                    "courses_year": 2015
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg",
-                    "courses_year"
-                ],
-                "ORDER": "courses_avg"
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
-
-    it("Simple query 2 B", function () {
-        let myQ = {
-            "WHERE": {
-                "LT": {
-                    "courses_year": 2015
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg",
-                    "courses_year"
-                ],
-                "ORDER": "courses_avg"
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result);
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -505,8 +235,8 @@ describe("InsightFacade", function () {
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
             let result: any = response.body;
-            //console.log(result.length); // 56
-            //console.log(result);
+            console.log(result.length); // 56
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -541,95 +271,8 @@ describe("InsightFacade", function () {
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
             let result: any = response.body;
-            //console.log(result.length); // 64612?
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
-
-    it("course_pass", function () {
-        let myQ = {
-            "WHERE": {
-                "AND": [
-                    {
-                        "GT": {
-                            "courses_pass": 50
-                        }
-                    },
-                    {
-                        "LT": {
-                            "courses_fail": 10
-                        }
-                    }
-                ]
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_id",
-                    "courses_fail"
-                ],
-                "ORDER": "courses_fail"
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result.length); // 64612?
-            //console.log(result);
-        }).catch(function (response: InsightResponse) {
-            expect.fail('Should not happen');
-        });
-
-    });
-
-    it("not LTcourse_pass", function () {
-        let myQ = {
-            "WHERE": {
-                "OR": [
-                    {
-                        "LT": {
-                            "courses_pass": 50
-                        }
-                    },
-                    {
-                        "LT": {
-                            "courses_fail": 10
-                        }
-                    },
-                    {
-                        "LT": {
-                            "courses_audit": 10
-                        }
-                    },
-                    {
-                        "LT": {
-                            "courses_year": 2010
-                        }
-                    },
-                    {
-                        "LT": {
-                            "rooms_seats": 10
-                        }
-                    }
-                ]
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_id",
-                    "courses_fail"
-                ],
-                "ORDER": "courses_fail"
-            }
-        };
-        return facade.performQuery(myQ).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            let result: any = response.body;
-            //console.log(result.length); // 64612?
-            //console.log(result);
+            console.log(result.length); // 64612?
+            console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
         });
@@ -666,7 +309,7 @@ describe("InsightFacade", function () {
         return facade.performQuery(myQ).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
             let result: any = response.body;
-            //console.log(result.length); // 64612?
+            console.log(result.length); // 64612?
             //console.log(result);
         }).catch(function (response: InsightResponse) {
             expect.fail('Should not happen');
@@ -708,41 +351,6 @@ describe("InsightFacade", function () {
                     }
                 ]
             },
-            "OPTIONS": {
-                "COLUMNS": []
-            }
-        };
-        facade = new InsightFacade();
-        return facade.performQuery(query).then(function (response: InsightResponse) {
-            expect.fail();
-        }).catch(function (response: InsightResponse) {
-            expect(response.code).to.equal(400);
-        });
-    });
-
-
-    it("Should not be able to query when WHERE is empty.", function (done) {
-        //this.timeout(100000);
-        let query: any = {
-            /*"WHERE": {
-                "AND": [
-                    {
-                        "GT": {
-                            "courss_avg": "95"
-                        }
-                    },
-                    {
-                        "EQ": {
-                            "courss_avg": "85"
-                        }
-                    },
-                    {
-                        "IS": {
-                            "courses_dept": "cpsc"
-                        }
-                    }
-                ]
-            },*/
             "OPTIONS": {
                 "COLUMNS": []
             }
@@ -877,7 +485,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
@@ -899,7 +507,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
@@ -940,53 +548,11 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
     });
-
-    it("d3 AA", function (done) {
-        //this.timeout(100000);
-        let query: any = {
-            "WHERE": {
-                "AND": [{
-                    "IS": {
-                        "rooms_furniture": "*Tables*"
-                    }
-                }, {
-                    "LT": {
-                        "rooms_seats": 300
-                    }
-                }]
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "rooms_shortname",
-                    "maxSeats"
-                ],
-                "ORDER": {
-                    "dir": "DOWN",
-                    "keys": ["maxSeats"]
-                }
-            },
-            "TRANSFORMATIONS": {
-                "GROUP": ["rooms_shortname"],
-                "APPLY": [{
-                    "maxSeats": {
-                        "MAX": "rooms_seats"
-                    }
-                }]
-            }
-        };
-        return facade.performQuery(query).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            //console.log(response.body);
-        }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
-        });
-    });
-
 
     it("d3 B", function (done) {
         //this.timeout(100000);
@@ -1005,35 +571,11 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
     });
-
-    it("d3 C", function (done) {
-        //this.timeout(100000);
-        let query: any = {
-            "WHERE": {},
-            "OPTIONS": {
-                "COLUMNS": [
-                    "rooms_href"
-                ],
-                "ORDER": "rooms_href"
-            },
-            "TRANSFORMATIONS": {
-                "GROUP": ["rooms_href"],
-                "APPLY": []
-            }
-        };
-        return facade.performQuery(query).then(function (response: InsightResponse) {
-            expect(response.code).to.equal(200);
-            //console.log(response.body);
-        }).catch(function (response: InsightResponse) {
-            expect.fail("Should not happen");
-        });
-    });
-
 
     it("d3 many applys", function (done) {
         //this.timeout(100000);
@@ -1090,7 +632,7 @@ describe("InsightFacade", function () {
         };
         return facade.performQuery(query).then(function (response: InsightResponse) {
             expect(response.code).to.equal(200);
-            //console.log(response.body);
+            console.log(response.body);
         }).catch(function (response: InsightResponse) {
             expect.fail("Should not happen");
         });
