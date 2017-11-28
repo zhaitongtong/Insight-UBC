@@ -12,6 +12,9 @@ import {expect} from 'chai';
 import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
 
+let fs = require('fs');
+let URL = "http://127.0.0.1:4321";
+
 describe("EchoSpec", function () {
 
 
@@ -42,7 +45,7 @@ describe("EchoSpec", function () {
         // Init
         chai.use(chaiHttp);
         let server = new Server(4321);
-        let URL = "http://127.0.0.1:4321";
+        //let URL = "http://127.0.0.1:4321";
 
         // Test
         expect(server).to.not.equal(undefined);
@@ -110,4 +113,183 @@ describe("EchoSpec", function () {
         expect(out.body).to.deep.equal({error: 'Message not provided'});
     });
 
+    it("PUT should fail", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .put('/dataset/rooms')
+            .attach("body", fs.readFileSync("./data/roomsfake.zip"), "./data/roomsfake.zip")
+            .then(function (responce: Response) {
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                expect(err).to.have.status(400);
+            });
+    });
+
+    it("POST should fail", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .post('/query')
+            .send({
+                "WHERE": {
+                    "IS": {
+                        "rooms_name": "DMP_*"
+                    }
+                },
+                "OPTIONS": {
+                    "COLUMNS": [
+                        "rooms_name"
+                    ]
+                }
+            })
+            .then(function (responce: Response) {
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                expect(err).to.have.status(400);
+            });
+    });
+
+    it("PUT description for rooms", function () {
+        return chai.request('http://localhost:4321')
+            .put('/dataset/rooms')
+            .attach("body", fs.readFileSync("./data/rooms.zip"), "rooms.zip")
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(204);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
+
+    it("PUT description for courses", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .put('/dataset/courses')
+            .attach("body", fs.readFileSync( ".data/courses.zip"), "courses.zip")
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(204);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
+
+    it("POST description for rooms", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .post('/query')
+            .send({
+                "WHERE": {
+                    "IS": {
+                        "rooms_name": "DMP_*"
+                    }
+                },
+                "OPTIONS": {
+                    "COLUMNS": [
+                        "rooms_name"
+                    ],
+                    "ORDER": "rooms_name"
+                }
+            })
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(200);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
+
+    it("POST description for courses", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .post('/query')
+            .send({
+                "WHERE": {
+                    "GT": {
+                        "courses_avg": 97
+                    }
+                },
+                "OPTIONS": {
+                    "COLUMNS": [
+                        "courses_dept",
+                        "courses_avg"
+                    ],
+                    "ORDER": "courses_avg"
+                }
+            })
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(200);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
+
+    it("POST description for rooms should fail", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .post('/query')
+            .send({
+                "WHERE":"",
+                "OPTIONS": {
+                    "COLUMNS": [
+                        "rooms_name"
+                    ],
+                    "ORDER": "rooms_name"
+                }
+            })
+            .then(function (responce: Response) {
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                expect(err).to.have.status(400);
+            });
+    });
+
+    it("POST description for courses should fail", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .post('/query')
+            .send({
+                "WHERE": "",
+                "OPTIONS": {
+                    "COLUMNS": [
+                        "courses_dept",
+                        "courses_avg"
+                    ],
+                    "ORDER": "courses_avg"
+                }
+            })
+            .then(function (responce: Response) {
+                expect.fail();
+            })
+            .catch(function (err: any) {
+                expect(err).to.have.status(400);
+            });
+    });
+
+    it("DELETE description for rooms", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .del('/dataset/rooms')
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(204);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
+
+    it("DELETE description for courses", function () {
+        //return chai.request('http://localhost:4321')
+        return chai.request(URL)
+            .del('/dataset/courses')
+            .then(function (responce: Response) {
+                expect(responce).to.have.status(204);
+            })
+            .catch(function (err: any) {
+                expect.fail();
+            });
+    });
 });
