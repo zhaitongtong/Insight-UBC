@@ -180,6 +180,11 @@ export default class InsightFacade implements IInsightFacade {
                                     return;
                                 }*/
                                 datasets[id] = mydataset;
+                                fs.writeFile("./test/courses.json", JSON.stringify(mydataset), (err: any) => {
+                                    if (err) {
+                                    } else {
+                                    }
+                                });
                                 if (!alreadyExisted) {
                                     fulfill(204);
                                 } else {
@@ -351,6 +356,11 @@ export default class InsightFacade implements IInsightFacade {
                                         }
                                     }
                                     datasets[id] = rooms;
+                                    fs.writeFile("./test/rooms.json", JSON.stringify(rooms), (err: any) => {
+                                        if (err) {
+                                        } else {
+                                        }
+                                    });
                                     if (!roomAlreadyExisted) {
                                         fulfill(204);
                                     } else {
