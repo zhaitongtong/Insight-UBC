@@ -55,7 +55,7 @@ var datasets: Datasets = {};
 export default class InsightFacade implements IInsightFacade {
 
     constructor() {
-        Log.trace('InsightFacadeImpl::init()');
+        //Log.trace('InsightFacadeImpl::init()');
         //this.datasetController = new DatasetController();
     }
 
@@ -96,10 +96,10 @@ export default class InsightFacade implements IInsightFacade {
                         reject({code: 400, body: {error: "WTF"}});
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error:"WTF"}});
+                    reject({code: 400, body: {error: "WTF"}});
                 }
             } else {
-                reject({code: 400, body: {error:"wrong id"}});
+                reject({code: 400, body: {error: "wrong id"}});
             }
         });
     };
@@ -131,7 +131,7 @@ export default class InsightFacade implements IInsightFacade {
                                     var processedCourseData: any = [];
                                     if (!(typeof (coursedata.result[0]) === 'undefined')) {  // don't save courses if "result" is undefined
                                         for (var i = 0; i < coursedata.result.length; i++) {
-                                            if (i<1) {
+                                            if (i < 1) {
                                                 //console.log(coursedata.result[i]);
                                             }
                                             let year = 1900;
@@ -161,7 +161,7 @@ export default class InsightFacade implements IInsightFacade {
                             }
                         });
                         Promise.all(coursePromises).then(function () {
-                            try{
+                            try {
                                 //fulfill(alreadyExisted ? 201 : 204);
                                 processedDataset = dictionary;
                                 let allCourses = Object.keys(processedDataset);
@@ -196,19 +196,19 @@ export default class InsightFacade implements IInsightFacade {
                         });
                     })
                     .catch(function (err: any) {
-                        Log.trace('DatasetController.process method error: can not zip the file.');
+                        //Log.trace('DatasetController.process method error: can not zip the file.');
                         reject(err);
                     });
             } catch (err) {
-                Log.trace('DatasetController.process method error.');
+                //Log.trace('DatasetController.process method error.');
                 reject(err);
             }
         });
     }
 
-    private getDatasets(): any {
+/*    private getDatasets(): any {
         return datasets;
-    }
+    }*/
 
     private processRoomZip(id: string, data: any): Promise<number> {
         return new Promise(function (fulfill, reject) {
@@ -229,7 +229,7 @@ export default class InsightFacade implements IInsightFacade {
                                 return;
                             }
 
-                            if (file.charAt(file.length-1) === '/' || file.substring(file.length-9) === '.DS_Store') {
+                            if (file.charAt(file.length - 1) === '/' || file.substring(file.length - 9) === '.DS_Store') {
                                 continue;
                             }
                             let promise = body.files[file].async("string")
@@ -250,7 +250,7 @@ export default class InsightFacade implements IInsightFacade {
                                     let rooms: any[] = [];
                                     if (roomNode === null)
                                         return rooms;
-                                    let fileName = file.substring(file.lastIndexOf('/')+1);
+                                    let fileName = file.substring(file.lastIndexOf('/') + 1);
                                     if (fileName === 'LASR') { // hard code LASR now
                                         /*
                                          102	80	Classroom-Fixed Tables/Fixed Chairs	Tiered Large Group	More info
@@ -375,11 +375,12 @@ export default class InsightFacade implements IInsightFacade {
                         reject(400);
                     });
             } catch (err) {
-                Log.trace('DatasetController.process method error.');
+                //Log.trace('DatasetController.process method error.');
                 reject(err);
             }
         });
     }
+
     /**
      * Remove a dataset from UBCInsight.
      *
@@ -390,13 +391,16 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
-                console.log('remove ' + "./test/" + id + ".json");
+                //console.log('remove ' + "./test/" + id + ".json");
                 delete datasets[id];
                 fs.unlink("./test/" + id + ".json");
                 fulfill({code: 204, body: "the operation was successful."});
                 return;
             } else {
-                reject({code: 404,body: "the operation was unsuccessful because the delete was  for a resource that was not previously added."});
+                reject({
+                    code: 404,
+                    body: "the operation was unsuccessful because the delete was  for a resource that was not previously added."
+                });
                 return;
             }
         });
@@ -414,13 +418,13 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let data: any = null;
             if ((!('OPTIONS' in query)) || (!('COLUMNS' in query['OPTIONS']))) {
-                reject({code: 400,body: {}});
+                reject({code: 400, body: {}});
                 return;
             }
             let options = query["OPTIONS"];
             let columns: any[] = options["COLUMNS"];
             if ((columns.length === 0) || (columns[0].length === 0)) {
-                reject({code: 400,body: {}});
+                reject({code: 400, body: {}});
                 return;
             }
             let isCourseQuery: boolean = false;
@@ -447,8 +451,8 @@ export default class InsightFacade implements IInsightFacade {
                 hasTrans = true;
 
             if (!isValid(query, isCourseQuery, hasTrans)) {
-                console.log('query is not valid');
-                reject({code: 400,body: {}});
+                //console.log('query is not valid');
+                reject({code: 400, body: {}});
                 return;
             } else {
                 let where = query["WHERE"];
@@ -549,10 +553,10 @@ export default class InsightFacade implements IInsightFacade {
                             if (applyTokens[i] === "COUNT") {
                                 record[newKeys[i]] = Object.keys(newValues[i]).length;
                             } else if (applyTokens[i] === "AVG") {
-                                let sum = Number(newValues[i].map((val: any) => new Decimal(val)).reduce((a: any,b: any) => a.plus(b)).toNumber().toFixed(2));
+                                let sum = Number(newValues[i].map((val: any) => new Decimal(val)).reduce((a: any, b: any) => a.plus(b)).toNumber().toFixed(2));
                                 record[newKeys[i]] = Number((sum / oneGroup.length).toFixed(2));
                             } else if (applyTokens[i] === "SUM") {
-                                let sum = Number(newValues[i].map((val: any) => new Decimal(val)).reduce((a: any,b: any) => a.plus(b)).toNumber().toFixed(2));
+                                let sum = Number(newValues[i].map((val: any) => new Decimal(val)).reduce((a: any, b: any) => a.plus(b)).toNumber().toFixed(2));
                                 record[newKeys[i]] = sum;
                             } else
                                 record[newKeys[i]] = newValues[i];
@@ -605,7 +609,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
 
-                fulfill({code: 200,body: {result: result}});
+                fulfill({code: 200, body: {result: result}});
                 return;
             }
         });
@@ -629,7 +633,7 @@ function isValid(query: any, isCourseQuery: boolean, hasTransformations: boolean
 }
 
 function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): boolean {
-    let options:any = query['OPTIONS'];
+    let options: any = query['OPTIONS'];
     let columns = options['COLUMNS'];
     if (columns.length < 1)
         return false;
@@ -637,27 +641,27 @@ function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): b
     if (isCourseQuery)
         firstLetter = 'c';
     if (!hasTrans) {
-        for (let i = 0; i < columns.length; i++){
+        for (let i = 0; i < columns.length; i++) {
             let key = columns[i];
-            if (firstLetter !== key.charAt(0))
+            if ((firstLetter !== key.charAt(0)) || (!(MKEY.includes(key) || SKEY.includes(key))))
                 return false;
-            if(!(MKEY.includes(key) || SKEY.includes(key)))
-                return false;
+           /* if (!(MKEY.includes(key) || SKEY.includes(key)))
+                return false;*/
         }
-        if('ORDER' in options){
+        if ('ORDER' in options) {
             let order = options['ORDER'];
             if (isString(order)) { // order is string
                 if (!columns.includes(order))
                     return false;
             } else if (isObject(order)) { // order is object
-                if (Object.keys(order).length !== 2)
+                if ((Object.keys(order).length !== 2) || (!("dir" in order)) || (order["dir"] !== "DOWN" && order["dir"] !== "UP") || (!("keys" in order)))
                     return false;
-                if (!("dir" in order))
+                /*if (!("dir" in order))
                     return false;
                 if (order["dir"] !== "DOWN" && order["dir"] !== "UP")
                     return false;
                 if (!("keys" in order))
-                    return false;
+                    return false;*/
                 let orderKeys: any = order["keys"];
                 if (orderKeys.length === 0)
                     return false;
@@ -678,10 +682,10 @@ function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): b
         if (groups.length === 0)
             return false;
         for (let group of groups) {
-            if (!(MKEY.includes(group) || SKEY.includes(group)))
+            if ((!(MKEY.includes(group) || SKEY.includes(group))) || (group.charAt(0) !== firstLetter))
                 return false;
-            if (group.charAt(0) !== firstLetter)
-                return false;
+           /* if (group.charAt(0) !== firstLetter)
+                return false;*/
         }
         if (!("APPLY" in transformations))
             return false;
@@ -691,10 +695,10 @@ function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): b
             if (Object.keys(apply).length !== 1)
                 return false;
             let newString: string = Object.keys(apply)[0];
-            if (newString.indexOf('_') >= 0)
+            if ((newString.indexOf('_') >= 0) || (newKeys.includes(newString)))
                 return false;
-            if (newKeys.includes(newString))
-                return false;
+            /*if (newKeys.includes(newString))
+                return false;*/
             newKeys.push(newString);
             let applyObject: any = apply[newString];
             if (Object.keys(applyObject).length !== 1)
@@ -711,15 +715,15 @@ function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): b
                     return false;
             }
         }
-        for (let i = 0; i < columns.length; i++){
+        for (let i = 0; i < columns.length; i++) {
             let key = columns[i];
             if (key.indexOf('_') >= 0) {
-                if (!(MKEY.includes(key) || SKEY.includes(key)))
+                if ((!(MKEY.includes(key) || SKEY.includes(key))) || (firstLetter !== key.charAt(0)) || (!groups.includes(key)))
                     return false;
-                if (firstLetter !== key.charAt(0))
+                /*if (firstLetter !== key.charAt(0))
                     return false;
                 if (!groups.includes(key))
-                    return false;
+                    return false;*/
             } else {
                 let hasThisKey = false;
                 for (let apply of applys) {
@@ -730,20 +734,20 @@ function check_options(query: any, isCourseQuery: boolean, hasTrans: boolean): b
                     return false;
             }
         }
-        if('ORDER' in options){
+        if ('ORDER' in options) {
             let order = options['ORDER'];
             if (isString(order)) { // order is string
                 if (!columns.includes(order))
                     return false;
             } else if (isObject(order)) { // order is object
-                if (Object.keys(order).length !== 2)
+                if ((Object.keys(order).length !== 2) || (!("dir" in order)) || (order["dir"] !== "DOWN" && order["dir"] !== "UP") || (!("keys" in order)))
                     return false;
-                if (!("dir" in order))
+               /* if (!("dir" in order))
                     return false;
                 if (order["dir"] !== "DOWN" && order["dir"] !== "UP")
                     return false;
                 if (!("keys" in order))
-                    return false;
+                    return false;*/
                 let orderKeys: any = order["keys"];
                 if (orderKeys.length === 0)
                     return false;
@@ -765,7 +769,7 @@ function check_where(where: any): boolean {
     let top = Object.keys(where)[0];
     switch (top) {
         case "AND": {
-            if(where[top].length === 0){
+            if (where[top].length === 0) {
                 return false;
             }
             let filters = where[top];
@@ -777,7 +781,7 @@ function check_where(where: any): boolean {
         }
 
         case "OR": {
-            if(where[top].length === 0){
+            if (where[top].length === 0) {
                 return false;
             }
             let filters = where[top];
@@ -970,7 +974,7 @@ function processRoom(node: any, fileName: string, rooms: any[]) {
     }
 }
 
-function searchTbody(node: any) : any{
+function searchTbody(node: any): any {
     if (node['nodeName'] === 'tbody')
         return node;
     if (!('childNodes' in node))
@@ -997,7 +1001,7 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
                     res.on('data', (chunk: any) => {
                         rawData += chunk;
                     });
-                    res.on('end', function() {
+                    res.on('end', function () {
                         try {
                             const parsedData = JSON.parse(rawData);
                             fulfill(parsedData);
@@ -1007,12 +1011,12 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
                         }
 
                     });
-                }).on('error', function(err: any) {
+                }).on('error', function (err: any) {
                     throw('Err');
                 });
             }));
         }
-        Promise.all(pArr).then(function(result) {
+        Promise.all(pArr).then(function (result) {
             for (let index in Object.keys(buildings)) {
                 let key = Object.keys(buildings)[index];
                 let latLonObject: any = result[index];
@@ -1023,7 +1027,7 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
             }
             fulfill(result);
         }).catch(function (err) {
-            Log.trace('Promise.all rejected ' + err);
+            //Log.trace('Promise.all rejected ' + err);
             reject(err);
         })
     });
