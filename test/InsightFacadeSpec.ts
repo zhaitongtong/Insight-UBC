@@ -692,7 +692,7 @@ describe("InsightFacade", function () {
 
     it("Should not be able to query when there is no WHERE", function () {
         //this.timeout(100000);
-        let query: any ={
+        let query: any = {
             "OPTIONS": {
                 "COLUMNS": [
                     "courses_dept",
@@ -732,6 +732,106 @@ describe("InsightFacade", function () {
 
     });
 
+    it("Should not be able to query when there is no GROUP", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to query when there is no APPLY", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
     it("Should not be able to query when OPTIONS is empty.", function () {
         //this.timeout(100000);
         let query: any = {
@@ -767,7 +867,7 @@ describe("InsightFacade", function () {
 
     it("Should not be able to query when WHERE is empty.", function () {
         //this.timeout(100000);
-        let query: any ={
+        let query: any = {
             "WHERE": "",
             "OPTIONS": {
                 "COLUMNS": [
@@ -901,6 +1001,169 @@ describe("InsightFacade", function () {
         }).catch(function (response: InsightResponse) {
             expect(response.code).to.equal(400);
         });
+    });
+
+    it("Should not be able to perform when OR has no arg", function () {
+        let myQ = {
+            "WHERE": {
+                "OR": [
+                    {}
+                ]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
+    it("Should not be able to perform when OR has no arg 2", function () {
+        let myQ = {
+            "WHERE": {
+                "OR": ""
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to perform when AND has no arg", function () {
+        let myQ = {
+            "WHERE": {
+                "AND": ""
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
+    it("Should not be able to perform when EQ has no arg", function () {
+        let myQ = {
+            "WHERE": {
+                "EQ": ""
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
+    it("Should not be able to perform when OR has one arg", function () {
+        let myQ = {
+            "WHERE": {
+                "OR": [
+                    {
+                        "LT": {
+                            "courses_pass": 50
+                        }
+                    }
+                ]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
+    it("Should not be able to perform when operation is invalid", function () {
+        let myQ = {
+            "WHERE": {
+                "WT": ""
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_fail"
+                ],
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+
+            let result: any = response.body;
+            //console.log(result.length); // 64612?
+            //console.log(result);
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
     });
 
     it("Should be able to perform room query 1", function () {
@@ -1139,6 +1402,247 @@ describe("InsightFacade", function () {
         });
     });
 
+
+    it("Should not be able to query when there is not order keys", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {}
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to query when order keys length is 0", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": ""
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to perform query when APPLY length is not 1", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "maxSeats",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats",
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
+    it("Should not be able to perform query when MKEY is not included in the oldstring", function () {
+        //this.timeout(100000);
+        let query: any = {
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 100
+                    }
+                }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_shortname",
+                    "minSeats",
+                    "avgSeats",
+                    "sumSeats",
+                    "countSeats"
+                ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                }
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                }, {
+                    "minSeats": {
+                        "MIN": "rooms_seats"
+                    }
+                }, {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }, {
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }, {
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
+        };
+        return facade.performQuery(query).then(function (response: InsightResponse) {
+            expect.fail();
+            //console.log(response.body);
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+    });
+
     it("Should not be able to query when GROUP is empty", function () {
         //this.timeout(100000);
         let query: any = {
@@ -1301,6 +1805,36 @@ describe("InsightFacade", function () {
             expect(response.code).to.equal(400);
         });
     });
+
+    it("Should not be able to perform query when COLUMNS length is 0", function () {
+        let myQ = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "GT": {
+                            "courses_pass": 50
+                        }
+                    },
+                    {
+                        "LT": {
+                            "courses_fail": 10
+                        }
+                    }
+                ]
+            },
+            "OPTIONS": {
+                "COLUMNS": "",
+                "ORDER": "courses_fail"
+            }
+        };
+        return facade.performQuery(myQ).then(function (response: InsightResponse) {
+            expect.fail();
+        }).catch(function (response: InsightResponse) {
+            expect(response.code).to.equal(400);
+        });
+
+    });
+
 
     it("Should be able to remove a rooms dataset in the end (204)", function () {
         return facade.removeDataset('rooms').then(function (response: InsightResponse) {
