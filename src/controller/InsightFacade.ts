@@ -1,6 +1,7 @@
 import {IInsightFacade, InsightResponse} from "./IInsightFacade";
 import Log from "../Util";
 
+// my import
 let fs = require('fs');
 let JSZip = require('jszip');
 var request = require('request');
@@ -34,7 +35,6 @@ dictionary = {
     "rooms_furniture": "",
     "rooms_href": ""
 };
-
 let Decimal = require("decimal.js");
 let MKEY = ['courses_avg', 'courses_pass', 'courses_fail', 'courses_audit', 'courses_year', 'rooms_lat', 'rooms_lon', 'rooms_seats'];
 let SKEY = ['courses_dept', 'courses_id', 'courses_instructor', 'courses_title', 'courses_uuid', 'rooms_fullname', 'rooms_shortname', 'rooms_number', 'rooms_name', 'rooms_address', 'rooms_type', 'rooms_furniture', 'rooms_href'];
@@ -53,6 +53,7 @@ interface Datasets {
 var datasets: Datasets = {};
 
 export default class InsightFacade implements IInsightFacade {
+
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
         //this.datasetController = new DatasetController();
@@ -73,43 +74,32 @@ export default class InsightFacade implements IInsightFacade {
                     that.processRoomZip(id, content).then(function (result: any) {
                         if (result === 204) {
                             fulfill({code: 204, body: {success: result}});
-                            return;
-                        } else if (result === 201){
+                        } else {
                             fulfill({code: 201, body: {success: result}});
-                            return;
-                        } else if(result ===400){
-                            reject({code: 400, body: {error: 400}});
-                            return;
                         }
                     }).catch(function () {
                         reject({code: 400, body: {error: 400}});
-                        return;
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error: 400}});
-                    return;
+                    reject({code: 400, body: {error: err}});
                 }
             } else if (id === "courses") {
                 try {
                     that.process(id, content).then(function (result: any) {
                         if (result === 204) {
                             fulfill({code: 204, body: {success: result}});
-                            return;
-                        } else if (result === 201){
+                        } else {
                             fulfill({code: 201, body: {success: result}});
                             return;
                         }
                     }).catch(function () {
-                        reject({code: 400, body: {error: 400}});
-                        return;
+                        reject({code: 400, body: {error: "WTF"}});
                     })
                 } catch (err) {
-                    reject({code: 400, body: {error:400}});
-                    return;
+                    reject({code: 400, body: {error:"WTF"}});
                 }
             } else {
-                reject({code: 400, body: {error:400}});
-                return;
+                reject({code: 400, body: {error:"wrong id"}});
             }
         });
     };
@@ -192,7 +182,7 @@ export default class InsightFacade implements IInsightFacade {
                                 datasets[id] = mydataset;
                                 fs.writeFile("./test/courses.json", JSON.stringify(mydataset), (err: any) => {
                                     if (err) {
-                                        reject(400);
+                                    } else {
                                     }
                                 });
                                 if (!alreadyExisted) {
@@ -207,11 +197,11 @@ export default class InsightFacade implements IInsightFacade {
                     })
                     .catch(function (err: any) {
                         //Log.trace('DatasetController.process method error: can not zip the file.');
-                        reject(400);
+                        reject(err);
                     });
             } catch (err) {
                 //Log.trace('DatasetController.process method error.');
-                reject(400);
+                reject(err);
             }
         });
     }
@@ -386,9 +376,8 @@ export default class InsightFacade implements IInsightFacade {
                     });
             } catch (err) {
                 //Log.trace('DatasetController.process method error.');
-                reject(400);
+                reject(err);
             }
-            reject(400);
         });
     }
     /**
@@ -401,7 +390,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let idExists: boolean = datasets.hasOwnProperty(id) && !isUndefined(datasets[id]);
             if (idExists) {
-                console.log('remove ' + "./test/" + id + ".json");
+                //console.log('remove ' + "./test/" + id + ".json");
                 delete datasets[id];
                 fs.unlink("./test/" + id + ".json");
                 fulfill({code: 204, body: "the operation was successful."});
@@ -458,7 +447,7 @@ export default class InsightFacade implements IInsightFacade {
                 hasTrans = true;
 
             if (!isValid(query, isCourseQuery, hasTrans)) {
-                console.log('query is not valid');
+                //console.log('query is not valid');
                 reject({code: 400,body: {}});
                 return;
             } else {
@@ -1034,7 +1023,7 @@ function getLatLon(urls: string[]): Promise<Array<any>> {
             }
             fulfill(result);
         }).catch(function (err) {
-            Log.trace('Promise.all rejected ' + err);
+            //Log.trace('Promise.all rejected ' + err);
             reject(err);
         })
     });
