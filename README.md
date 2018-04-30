@@ -1,1 +1,1 @@
-InsightUBC is a query engine for parsing and querying UBC courses and rooms data.The back-end includes a dataset controller, which can parse JSON and HTML files, and a query-controller, which can handle multiple queries in the form of JSON strings. 
+A query engine for parsing and querying UBC courses and rooms data.The back-end includes a dataset controller, which can parse JSON and HTML files, and a query-controller, which can handle multiple queries in the form of JSON strings. 
